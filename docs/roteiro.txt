@@ -1,0 +1,25 @@
+├── index.php
+├── config/
+│   └── database.php
+├── controllers/
+│   ├── ProjectController.php
+│   └── ActivityController.php
+├── models/
+│   ├── Project.php
+│   └── Activity.php
+├── views/
+│   ├── projects/
+│   │   ├── index.php
+│   │   ├── create.php
+│   │   ├── edit.php
+│   │   └── view.php
+│   └── activities/
+│       ├── index.php
+│       ├── create.php
+│       └── edit.php
+├── assets/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── script.js
+└── database.sql

@@ -1,0 +1,224 @@
+:root {
+    /* Colors - Modern Palette */
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --success-color: #4cc9f0;
+    --danger-color: #f72585;
+    --warning-color: #fca311;
+    --info-color: #4895ef;
+    
+    --light-bg: #f3f4f6;
+    --dark-text: #1f2937;
+    --light-text: #6b7280;
+    --border-color: #e5e7eb;
+    
+    /* Sidebar */
+    --sidebar-width: 260px;
+    --sidebar-bg: #ffffff;
+    --sidebar-text: #4b5563;
+    --sidebar-active-bg: #eff6ff;
+    --sidebar-active-text: #4361ee;
+    
+    /* Spacing & Radius */
+    --border-radius-sm: 0.375rem;
+    --border-radius-md: 0.75rem;
+    --border-radius-lg: 1rem;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+body {
+    background-color: var(--light-bg);
+    color: var(--dark-text);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+}
+
+/* Layout System */
+.wrapper {
+    width: 100%;
+    align-items: stretch;
+}
+
+#sidebar {
+    min-width: var(--sidebar-width);
+    max-width: var(--sidebar-width);
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    transition: all 0.3s;
+    min-height: 100vh;
+    border-right: 1px solid var(--border-color);
+    position: fixed;
+    z-index: 1000;
+}
+
+#content {
+    width: 100%;
+    margin-left: var(--sidebar-width);
+    padding: 2rem;
+    transition: all 0.3s;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: calc(-1 * var(--sidebar-width));
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+    #content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+}
+
+/* Sidebar Components */
+.sidebar-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-brand {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.components {
+    padding: 1rem 0;
+}
+
+.components li {
+    list-style: none;
+}
+
+.components li a {
+    padding: 0.75rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.components li a:hover {
+    color: var(--primary-color);
+    background: var(--light-bg);
+}
+
+.components li a.active {
+    background: var(--sidebar-active-bg);
+    color: var(--sidebar-active-text);
+    border-left-color: var(--primary-color);
+}
+
+/* UI Components overrides */
+.card {
+    border: none;
+    background: white;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+}
+
+/* Stat Cards (Redesigned) */
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.2s;
+    border-left: 4px solid transparent;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card.total { border-left-color: var(--primary-color); }
+.stat-card.budget { border-left-color: var(--success-color); }
+.stat-card.spent { border-left-color: var(--danger-color); }
+.stat-card.duration { border-left-color: var(--warning-color); }
+
+.stat-card h6 {
+    color: var(--light-text);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+}
+
+.stat-card .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--dark-text);
+}
+
+/* --- Legacy / Other Components Support --- */
+
+/* Project Badges */
+.status-badge {
+    font-size: 0.75em;
+    font-weight: 600;
+    padding: 0.35em 0.8em;
+    border-radius: 9999px;
+}
+.status-planejamento { background-color: var(--light-text); color: white; }
+.status-em_andamento { background-color: var(--primary-color); color: white; }
+.status-concluido { background-color: #10b981; color: white; } /* Success green */
+.status-atrasado { background-color: var(--danger-color); color: white; }
+.status-cancelado { background-color: var(--light-text); color: white; }
+
+/* Buttons Modernized */
+.btn {
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+.btn-primary:hover {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+/* Table styling */
+.table th {
+    font-weight: 600;
+    color: var(--light-text);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    background-color: #f9fafb;
+}
+
+/* Utilities */
+.fw-600 { font-weight: 600; }
+.text-muted { color: var(--light-text) !important; }
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.4s ease-out; }
