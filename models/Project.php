@@ -45,19 +45,24 @@ class Project
 
         $stmt = $this->conn->prepare($query);
 
-        // Convert empty string customer_id to NULL for database insertion
+        // Convert empty strings to NULL for database insertion
         $customer_id = (empty($this->customer_id) || $this->customer_id === '') ? null : $this->customer_id;
+        $start_date = (empty($this->start_date) || $this->start_date === '') ? null : $this->start_date;
+        $end_date = (empty($this->end_date) || $this->end_date === '') ? null : $this->end_date;
+        $maintenance_start_date = (empty($this->maintenance_start_date) || $this->maintenance_start_date === '') ? null : $this->maintenance_start_date;
+        $maintenance_end_date = (empty($this->maintenance_end_date) || $this->maintenance_end_date === '') ? null : $this->maintenance_end_date;
+        $payment_received_date = (empty($this->payment_received_date) || $this->payment_received_date === '') ? null : $this->payment_received_date;
 
         $stmt->bindParam(":customer_id", $customer_id);
         $stmt->bindParam(":project_name", $this->project_name);
         $stmt->bindParam(":project_type", $this->project_type);
         $stmt->bindParam(":description", $this->description);
-        $stmt->bindParam(":start_date", $this->start_date);
-        $stmt->bindParam(":end_date", $this->end_date);
-        $stmt->bindParam(":maintenance_start_date", $this->maintenance_start_date);
-        $stmt->bindParam(":maintenance_end_date", $this->maintenance_end_date);
+        $stmt->bindParam(":start_date", $start_date);
+        $stmt->bindParam(":end_date", $end_date);
+        $stmt->bindParam(":maintenance_start_date", $maintenance_start_date);
+        $stmt->bindParam(":maintenance_end_date", $maintenance_end_date);
         $stmt->bindParam(":maintenance_monthly_value", $this->maintenance_monthly_value);
-        $stmt->bindParam(":payment_received_date", $this->payment_received_date);
+        $stmt->bindParam(":payment_received_date", $payment_received_date);
         $stmt->bindParam(":total_budget", $this->total_budget);
         $stmt->bindParam(":status", $this->status);
 
@@ -70,6 +75,7 @@ class Project
         $query = "SELECT id, project_name, project_type, description, start_date, end_date,
                          COALESCE(total_budget, 0) AS total_budget,
                          COALESCE(current_spent, 0) AS current_spent,
+                         COALESCE(maintenance_monthly_value, 0) AS maintenance_monthly_value,
                          status, created_at, updated_at
                   FROM " . $this->table . "
                   ORDER BY start_date DESC";
@@ -96,11 +102,11 @@ class Project
         $this->end_date = $row['end_date'];
         $this->maintenance_start_date = $row['maintenance_start_date'] ?? null;
         $this->maintenance_end_date = $row['maintenance_end_date'] ?? null;
-        $this->maintenance_monthly_value = (float)(isset($row['maintenance_monthly_value']) ? $row['maintenance_monthly_value'] : 0);
+        $this->maintenance_monthly_value = (float) (isset($row['maintenance_monthly_value']) ? $row['maintenance_monthly_value'] : 0);
         $this->payment_received_date = $row['payment_received_date'] ?? null;
         // Garantir que valores numéricos sejam sempre definidos e tipados
-        $this->total_budget = (float)(isset($row['total_budget']) ? $row['total_budget'] : 0);
-        $this->current_spent = (float)(isset($row['current_spent']) ? $row['current_spent'] : 0);
+        $this->total_budget = (float) (isset($row['total_budget']) ? $row['total_budget'] : 0);
+        $this->current_spent = (float) (isset($row['current_spent']) ? $row['current_spent'] : 0);
         $this->status = $row['status'];
         $this->created_at = $row['created_at'];
         $this->updated_at = $row['updated_at'];
@@ -125,19 +131,24 @@ class Project
 
         $stmt = $this->conn->prepare($query);
 
-        // Convert empty string customer_id to NULL for database update
+        // Convert empty strings to NULL for database update
         $customer_id = (empty($this->customer_id) || $this->customer_id === '') ? null : $this->customer_id;
+        $start_date = (empty($this->start_date) || $this->start_date === '') ? null : $this->start_date;
+        $end_date = (empty($this->end_date) || $this->end_date === '') ? null : $this->end_date;
+        $maintenance_start_date = (empty($this->maintenance_start_date) || $this->maintenance_start_date === '') ? null : $this->maintenance_start_date;
+        $maintenance_end_date = (empty($this->maintenance_end_date) || $this->maintenance_end_date === '') ? null : $this->maintenance_end_date;
+        $payment_received_date = (empty($this->payment_received_date) || $this->payment_received_date === '') ? null : $this->payment_received_date;
 
         $stmt->bindParam(":customer_id", $customer_id);
         $stmt->bindParam(":project_name", $this->project_name);
         $stmt->bindParam(":project_type", $this->project_type);
         $stmt->bindParam(":description", $this->description);
-        $stmt->bindParam(":start_date", $this->start_date);
-        $stmt->bindParam(":end_date", $this->end_date);
-        $stmt->bindParam(":maintenance_start_date", $this->maintenance_start_date);
-        $stmt->bindParam(":maintenance_end_date", $this->maintenance_end_date);
+        $stmt->bindParam(":start_date", $start_date);
+        $stmt->bindParam(":end_date", $end_date);
+        $stmt->bindParam(":maintenance_start_date", $maintenance_start_date);
+        $stmt->bindParam(":maintenance_end_date", $maintenance_end_date);
         $stmt->bindParam(":maintenance_monthly_value", $this->maintenance_monthly_value);
-        $stmt->bindParam(":payment_received_date", $this->payment_received_date);
+        $stmt->bindParam(":payment_received_date", $payment_received_date);
         $stmt->bindParam(":total_budget", $this->total_budget);
         $stmt->bindParam(":status", $this->status);
         $stmt->bindParam(":id", $this->id);
@@ -187,19 +198,19 @@ class Project
             SUM(CASE WHEN status = 'planejamento' AND (start_date IS NULL OR CAST(start_date AS CHAR) = '') AND (end_date IS NULL OR CAST(end_date AS CHAR) = '') THEN total_budget ELSE 0 END) as total_orcamento_propostas,
 
             -- Recebíveis: soma de projetos aprovados + sustentação, exceto manutenção de projetos em planejamento
-            COALESCE(SUM(CASE WHEN status != 'planejamento' AND project_type IN ('site_manutencao','site_apenas') THEN total_budget ELSE 0 END), 0) +
-            COALESCE(SUM(CASE WHEN status != 'planejamento' AND project_type = 'manutencao' AND maintenance_start_date IS NOT NULL AND CAST(maintenance_start_date AS CHAR) != '' AND maintenance_end_date IS NOT NULL AND CAST(maintenance_end_date AS CHAR) != '' THEN maintenance_monthly_value * (TIMESTAMPDIFF(MONTH, maintenance_start_date, maintenance_end_date) + 1) ELSE 0 END), 0) as total_recebiveis,
+            COALESCE(SUM(CASE WHEN status != 'planejamento' AND project_type IN ('desenvolvimento_sustentacao','desenvolvimento') THEN total_budget ELSE 0 END), 0) +
+            COALESCE(SUM(CASE WHEN status != 'planejamento' AND project_type = 'sustentacao' AND maintenance_start_date IS NOT NULL AND CAST(maintenance_start_date AS CHAR) != '' AND maintenance_end_date IS NOT NULL AND CAST(maintenance_end_date AS CHAR) != '' THEN maintenance_monthly_value * (TIMESTAMPDIFF(MONTH, maintenance_start_date, maintenance_end_date) + 1) ELSE 0 END), 0) as total_recebiveis,
 
             -- Sustentação: soma mensal dentro do período cadastrado, só de projetos aprovados
-            SUM(CASE WHEN status != 'planejamento' AND project_type = 'manutencao' THEN maintenance_monthly_value ELSE 0 END) as total_sustentacao_mensal,
+            SUM(CASE WHEN status != 'planejamento' AND project_type = 'sustentacao' THEN maintenance_monthly_value ELSE 0 END) as total_sustentacao_mensal,
 
             -- Contadores antigos
-            SUM(CASE WHEN project_type IN ('site_manutencao', 'site_apenas') THEN total_budget ELSE 0 END) as total_budget_projects,
-            SUM(CASE WHEN project_type = 'manutencao' THEN total_budget ELSE 0 END) as total_budget_maintenance,
-            SUM(CASE WHEN project_type IN ('site_manutencao', 'site_apenas') THEN current_spent ELSE 0 END) as total_spent_projects,
-            SUM(CASE WHEN project_type = 'manutencao' THEN current_spent ELSE 0 END) as total_spent_maintenance,
-            COUNT(CASE WHEN project_type IN ('site_manutencao', 'site_apenas') THEN 1 END) as count_projects,
-            COUNT(CASE WHEN project_type = 'manutencao' THEN 1 END) as count_maintenance
+            SUM(CASE WHEN project_type IN ('desenvolvimento_sustentacao', 'desenvolvimento') THEN total_budget ELSE 0 END) as total_budget_projects,
+            SUM(CASE WHEN project_type = 'sustentacao' THEN total_budget ELSE 0 END) as total_budget_maintenance,
+            SUM(CASE WHEN project_type IN ('desenvolvimento_sustentacao', 'desenvolvimento') THEN current_spent ELSE 0 END) as total_spent_projects,
+            SUM(CASE WHEN project_type = 'sustentacao' THEN current_spent ELSE 0 END) as total_spent_maintenance,
+            COUNT(CASE WHEN project_type IN ('desenvolvimento_sustentacao', 'desenvolvimento') THEN 1 END) as count_projects,
+            COUNT(CASE WHEN project_type = 'sustentacao' THEN 1 END) as count_maintenance
         FROM " . $this->table;
 
         $stmt = $this->conn->prepare($query);
@@ -208,8 +219,10 @@ class Project
 
         // Tipar corretamente os campos numéricos antes de retornar
         foreach ($result as $k => $v) {
-            if (strpos($k, 'count') === 0) $result[$k] = (int)$v;
-            else $result[$k] = (float)$v;
+            if (strpos($k, 'count') === 0)
+                $result[$k] = (int) $v;
+            else
+                $result[$k] = (float) $v;
         }
         return $result;
     }
@@ -228,5 +241,51 @@ class Project
     public function getLastInsertId()
     {
         return $this->conn->lastInsertId();
+    }
+
+    // Credentials methods
+    public function getCredentials($project_id)
+    {
+        $query = "SELECT * FROM project_access_credentials WHERE project_id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $project_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function addCredential($project_id, $data)
+    {
+        $query = "INSERT INTO project_access_credentials 
+                  SET project_id = :project_id,
+                      access_type = :access_type,
+                      server_url = :server_url,
+                      username = :username,
+                      password = :password,
+                      port = :port,
+                      notes = :notes";
+
+        $stmt = $this->conn->prepare($query);
+
+        // Clean nulls
+        $notes = $data['notes'] ?? '';
+        $port = isset($data['port']) && $data['port'] !== '' ? $data['port'] : null;
+
+        $stmt->bindParam(':project_id', $project_id);
+        $stmt->bindParam(':access_type', $data['access_type']);
+        $stmt->bindParam(':server_url', $data['server_url']);
+        $stmt->bindParam(':username', $data['username']);
+        $stmt->bindParam(':password', $data['password']);
+        $stmt->bindParam(':port', $port);
+        $stmt->bindParam(':notes', $notes);
+
+        return $stmt->execute();
+    }
+
+    public function deleteCredentials($project_id)
+    {
+        $query = "DELETE FROM project_access_credentials WHERE project_id = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $project_id);
+        return $stmt->execute();
     }
 }

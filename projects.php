@@ -17,9 +17,9 @@ $statusReport = $projectController->getStatusReport();
 
 // Mapear tipos de projeto
 $projectTypes = [
-    'site_manutencao' => 'Desenvolver Site e Manutenção',
-    'site_apenas' => 'Desenvolver Apenas o Site',
-    'manutencao' => 'Manutenção'
+    'desenvolvimento_sustentacao' => 'Desenvolvimento + Sustentação',
+    'desenvolvimento' => 'Desenvolvimento',
+    'sustentacao' => 'Sustentação'
 ];
 
 // Mapear status
@@ -93,7 +93,8 @@ require_once 'views/layouts/header.php';
         <div class="stat-card spent">
             <h6>Total Gasto</h6>
             <div class="value">R$
-                <?php echo format_currency(isset($summary['total_spent']) ? $summary['total_spent'] : 0); ?></div>
+                <?php echo format_currency(isset($summary['total_spent']) ? $summary['total_spent'] : 0); ?>
+            </div>
             <small class="text-muted">Todos os projetos</small>
         </div>
     </div>
@@ -149,9 +150,10 @@ require_once 'views/layouts/header.php';
                 <?php foreach ($projects as $project): ?>
                     <?php
                     $today = new DateTime();
-                    $endDate = new DateTime($project['end_date']);
-                    $daysLeft = $today->diff($endDate)->days;
-                    $isLate = $today > $endDate && $project['status'] != 'concluido';
+                    $hasEndDate = !empty($project['end_date']);
+                    $endDate = $hasEndDate ? new DateTime($project['end_date']) : null;
+                    $daysLeft = $hasEndDate ? $today->diff($endDate)->days : 0;
+                    $isLate = $hasEndDate && $today > $endDate && $project['status'] != 'concluido';
                     ?>
                     <div class="col-md-6 col-xl-4">
                         <div class="card h-100 border-0 shadow-sm transition-hover">
@@ -178,26 +180,40 @@ require_once 'views/layouts/header.php';
                                 </p>
 
                                 <!-- Info Cards -->
-                                <div class="bg-light p-2 rounded mb-3 d-flex justify-content-between">
-                                    <div class="text-center w-50 border-end">
-                                        <small class="text-muted d-block">Orçamento</small>
-                                        <strong class="text-success">R$
-                                            <?php echo format_currency($project['total_budget']); ?></strong>
-                                    </div>
-                                    <div class="text-center w-50">
-                                        <small class="text-muted d-block">Gasto</small>
-                                        <strong class="text-danger">R$
-                                            <?php echo format_currency($project['current_spent']); ?></strong>
+                                <div class="bg-light p-2 rounded mb-3">
+                                    <div class="d-flex justify-content-between">
+                                        <?php if ($project['project_type'] != 'sustentacao'): ?>
+                                            <div class="text-center w-100">
+                                                <small class="text-muted d-block">Orçamento</small>
+                                                <strong class="text-success">R$
+                                                    <?php echo format_currency($project['total_budget']); ?></strong>
+                                            </div>
+                                        <?php endif; ?>
+
+                                        <?php if ($project['project_type'] != 'desenvolvimento'): ?>
+                                            <div
+                                                class="text-center w-100 <?php echo ($project['project_type'] != 'sustentacao') ? 'border-start' : ''; ?>">
+                                                <small class="text-muted d-block">Sustentação</small>
+                                                <strong class="text-primary">R$
+                                                    <?php echo format_currency($project['maintenance_monthly_value']); ?>/mês</strong>
+                                            </div>
+                                        <?php endif; ?>
                                     </div>
                                 </div>
 
                                 <!-- Datas -->
-                                <div class="small text-muted mb-2 d-flex justify-content-between">
-                                    <span><i class="far fa-calendar-check me-1"></i> Início:
-                                        <?php echo date('d/m/y', strtotime($project['start_date'])); ?></span>
-                                    <span><i class="far fa-flag me-1"></i> Fim:
-                                        <?php echo date('d/m/y', strtotime($project['end_date'])); ?></span>
-                                </div>
+                                <?php if (!empty($project['start_date']) || !empty($project['end_date'])): ?>
+                                    <div class="small text-muted mb-2 d-flex justify-content-between">
+                                        <span><i class="far fa-calendar-check me-1"></i> Início:
+                                            <?php echo !empty($project['start_date']) ? date('d/m/y', strtotime($project['start_date'])) : '-'; ?></span>
+                                        <span><i class="far fa-flag me-1"></i> Fim:
+                                            <?php echo !empty($project['end_date']) ? date('d/m/y', strtotime($project['end_date'])) : '-'; ?></span>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="small text-muted mb-2 fst-italic">
+                                        <i class="fas fa-info-circle me-1"></i> Aguardando aprovação
+                                    </div>
+                                <?php endif; ?>
 
                                 <?php if ($isLate): ?>
                                     <div class="alert alert-danger py-1 px-2 small mb-0 text-center">

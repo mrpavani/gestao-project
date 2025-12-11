@@ -112,9 +112,9 @@ require_once '../../views/layouts/header.php';
                             <label class="form-label fw-bold small text-uppercase text-muted">Tipo do Projeto *</label>
                             <select class="form-select" name="project_type" required>
                                 <option value="">Selecione...</option>
-                                <option value="site_manutencao">Desenvolver Site e Sustentação</option>
-                                <option value="site_apenas">Desenvolver Apenas o Site</option>
-                                <option value="manutencao">Sustentação</option>
+                                <option value="desenvolvimento_sustentacao">Desenvolvimento + Sustentação</option>
+                                <option value="desenvolvimento">Desenvolvimento</option>
+                                <option value="sustentacao">Sustentação</option>
                             </select>
                         </div>
 
@@ -138,15 +138,21 @@ require_once '../../views/layouts/header.php';
                         <div class="col-md-6">
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <label class="form-label fw-bold small text-uppercase text-muted">Início *</label>
-                                    <input type="date" class="form-control" name="start_date" required>
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Início <span
+                                            class="date-required-hint text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="start_date" id="start_date">
+                                    <div class="invalid-feedback" id="error_start_date"></div>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label fw-bold small text-uppercase text-muted">Término *</label>
-                                    <input type="date" class="form-control" name="end_date" required>
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Término <span
+                                            class="date-required-hint text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="end_date" id="end_date">
                                     <div class="invalid-feedback" id="error_end_date"></div>
                                 </div>
                             </div>
+                            <small class="text-muted" id="date_hint" style="display:none;"><i
+                                    class="fas fa-info-circle"></i> Datas são opcionais para Planejamento (orçamento
+                                pendente)</small>
                         </div>
                     </div>
 
@@ -191,12 +197,14 @@ require_once '../../views/layouts/header.php';
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-uppercase text-muted">Status *</label>
-                            <select class="form-select" name="status" required>
-                                <option value="planejamento">Planejamento</option>
+                            <select class="form-select" name="status" id="status_select" required
+                                onchange="toggleDateRequirement()">
+                                <option value="planejamento">Planejamento (Orçamento)</option>
                                 <option value="em_andamento">Em Andamento</option>
                                 <option value="concluido">Concluído</option>
                                 <option value="atrasado">Atrasado</option>
                                 <option value="cancelado">Cancelado</option>
+                                <option value="nao_aprovado">Não Aprovado</option>
                             </select>
                         </div>
                     </div>
@@ -210,60 +218,59 @@ require_once '../../views/layouts/header.php';
                         </h6>
                         <div id="credentials_container">
                             <div class="credential-item mb-3 p-3 bg-light rounded border border-light">
-                                <div class="row g-2">
-                                    <div class="col-md-3">
-                                        <label class="form-label small">Tipo de Acesso</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            name="credentials[0][access_type]" placeholder="FTP, SSH, Admin...">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Tipo de Acesso</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                        name="credentials[0][access_type]" placeholder="FTP, SSH, Admin...">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">URL/Host</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                        name="credentials[0][server_url]" placeholder="ex: ftp.site.com">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Usuário</label>
+                                    <input type="text" class="form-control form-control-sm"
+                                        name="credentials[0][username]">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Senha</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="password" class="form-control" name="credentials[0][password]">
+                                        <button class="btn btn-outline-secondary" type="button"
+                                            onclick="togglePassword(this)">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                     </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label small">URL/Host</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            name="credentials[0][server_url]" placeholder="ex: ftp.site.com">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">Usuário</label>
-                                        <input type="text" class="form-control form-control-sm"
-                                            name="credentials[0][username]">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">Senha</label>
-                                        <input type="password" class="form-control form-control-sm"
-                                            name="credentials[0][password]">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label small">Porta</label>
-                                        <input type="number" class="form-control form-control-sm"
-                                            name="credentials[0][port]" placeholder="21">
-                                    </div>
-                                    <div class="col-12 mt-2">
-                                        <label class="form-label small">Observações</label>
-                                        <textarea class="form-control form-control-sm" name="credentials[0][notes]"
-                                            rows="1" placeholder="Detalhes adicionais..."></textarea>
-                                    </div>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <label class="form-label small">Observações</label>
+                                    <textarea class="form-control form-control-sm" name="credentials[0][notes]" rows="1"
+                                        placeholder="Detalhes adicionais..."></textarea>
                                 </div>
                             </div>
                         </div>
-
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCredential()">
-                            <i class="fas fa-plus"></i> Adicionar Acesso
-                        </button>
                     </div>
 
-                    <!-- Campo oculto para referrer -->
-                    <input type="hidden" name="referrer"
-                        value="<?php echo htmlspecialchars($_SERVER['HTTP_REFERER'] ?? 'projects.php'); ?>">
-
-                    <div class="d-flex justify-content-end gap-2 pt-3 border-top">
-                        <a href="../../projects.php" class="btn btn-light border">Cancelar</a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="fas fa-save me-1"></i> Salvar Projeto
-                        </button>
-                    </div>
-                </form>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCredential()">
+                        <i class="fas fa-plus"></i> Adicionar Acesso
+                    </button>
             </div>
+
+            <!-- Campo oculto para referrer -->
+            <input type="hidden" name="referrer"
+                value="<?php echo htmlspecialchars($_SERVER['HTTP_REFERER'] ?? 'projects.php'); ?>">
+
+            <div class="d-flex justify-content-end gap-2 pt-3 border-top">
+                <a href="../../projects.php" class="btn btn-light border">Cancelar</a>
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-save me-1"></i> Salvar Projeto
+                </button>
+            </div>
+            </form>
         </div>
     </div>
+</div>
 </div>
 
 <script>
@@ -295,13 +302,14 @@ require_once '../../views/layouts/header.php';
                     <label class="form-label small">Usuário</label>
                     <input type="text" class="form-control form-control-sm" name="credentials[${credentialCount}][username]">
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-4">
                     <label class="form-label small">Senha</label>
-                    <input type="password" class="form-control form-control-sm" name="credentials[${credentialCount}][password]">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small">Porta</label>
-                    <input type="number" class="form-control form-control-sm" name="credentials[${credentialCount}][port]" placeholder="21">
+                    <div class="input-group input-group-sm">
+                        <input type="password" class="form-control" name="credentials[${credentialCount}][password]">
+                        <button class="btn btn-outline-secondary" type="button" onclick="togglePassword(this)">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="col-12 mt-2">
                     <label class="form-label small">Observações</label>
@@ -462,6 +470,59 @@ require_once '../../views/layouts/header.php';
             block: 'center'
         });
     }
+
+    // Toggle password visibility
+    function togglePassword(btn) {
+        const input = btn.previousElementSibling;
+        const icon = btn.querySelector('i');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // Toggle date requirement based on status
+    function toggleDateRequirement() {
+        const status = document.getElementById('status_select').value;
+        const dateHints = document.querySelectorAll('.date-required-hint');
+        const dateHint = document.getElementById('date_hint');
+        const isPlanejamento = (status === 'planejamento' || status === 'nao_aprovado');
+
+        dateHints.forEach(h => h.style.display = isPlanejamento ? 'none' : 'inline');
+        if (dateHint) dateHint.style.display = isPlanejamento ? 'block' : 'none';
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleDateRequirement();
+    });
+
+    // Override form submit to validate dates conditionally
+    const originalSubmitHandler = document.querySelector('form').onsubmit;
+    document.querySelector('form').addEventListener('submit', function (e) {
+        const status = document.getElementById('status_select').value;
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        // If status is NOT planejamento/nao_aprovado, dates are required
+        if (status !== 'planejamento' && status !== 'nao_aprovado') {
+            if (!startDate) {
+                showFieldError('#start_date', 'Data de início é obrigatória para este status.');
+                e.preventDefault();
+                return false;
+            }
+            if (!endDate) {
+                showFieldError('#end_date', 'Data de término é obrigatória para este status.');
+                e.preventDefault();
+                return false;
+            }
+        }
+    }, true); // Use capture to run first
 </script>
 
 <?php require_once '../../views/layouts/footer.php'; ?>

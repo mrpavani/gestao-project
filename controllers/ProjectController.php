@@ -11,9 +11,11 @@ class ProjectController
     // Parse moeda formatada (ex: "R$ 1.234,56") para float
     private function parseCurrency($value)
     {
-        if ($value === null || $value === '') return 0;
+        if ($value === null || $value === '')
+            return 0;
         // se já for número puro
-        if (is_numeric($value)) return (float)$value;
+        if (is_numeric($value))
+            return (float) $value;
         $s = trim($value);
         // remover prefixos como R$
         $s = preg_replace('/[^0-9,\.\-]/u', '', $s);
@@ -34,7 +36,8 @@ class ProjectController
         }
         // caso seja apenas dígitos sem separador, tratar como centavos
         $digits = preg_replace('/\D+/', '', $s);
-        if ($digits === '') return 0;
+        if ($digits === '')
+            return 0;
         return intval($digits) / 100.0;
     }
 
@@ -167,6 +170,12 @@ class ProjectController
         $this->projectModel->status = $data['status'];
 
         if ($this->projectModel->update()) {
+
+            // Atualizar credenciais se fornecidas
+            if (isset($data['credentials']) && is_array($data['credentials'])) {
+                $this->saveCredentials($id, $data['credentials']);
+            }
+
             return ["success" => true, "message" => "Projeto atualizado com sucesso!"];
         }
         return ["success" => false, "message" => "Erro ao atualizar projeto."];
@@ -192,10 +201,24 @@ class ProjectController
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getCredentials($projectId)
+    {
+        return $this->projectModel->getCredentials($projectId);
+    }
+
+
     public function saveCredentials($projectId, $credentials)
     {
-        // As credenciais serão processadas quando implementarmos a tabela project_access_credentials
-        // Por enquanto, apenas registramos a intenção
+        // Limpar credenciais antigas (estratégia simples replace-all)
+        $this->projectModel->deleteCredentials($projectId);
+
+        foreach ($credentials as $cred) {
+            // Validar campos mínimos
+            if (empty($cred['access_type']))
+                continue;
+
+            $this->projectModel->addCredential($projectId, $cred);
+        }
         return true;
     }
 }
