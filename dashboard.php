@@ -9,51 +9,138 @@ $database = new Database();
 $db = $database->getConnection();
 $projectController = new ProjectController($db);
 
-// Obter dados
-$projects = $projectController->index();
-$summary = $projectController->getSummary();
+// Mês selecionado (padrão: mês atual)
+$selectedYear = isset($_GET['year']) ? (int) $_GET['year'] : (int) date('Y');
+$selectedMonth = isset($_GET['month']) ? (int) $_GET['month'] : (int) date('m');
 
-// Mapear status para cores (para referência rápida se necessário, mas agora usamos CSS classes)
-// As classes são .status-planejamento, .status-em_andamento, etc.
+// Obter dados do dashboard para o mês selecionado
+$dashboardData = getDashboardSummaryByMonth($db, $selectedYear, $selectedMonth);
+$projects = $projectController->index();
+
+// Função para calcular resumo mensal
+function getDashboardSummaryByMonth($db, $year, $month)
+{
+    $startOfMonth = "$year-" . str_pad($month, 2, '0', STR_PAD_LEFT) . "-01";
+    $endOfMonth = date("Y-m-t", strtotime($startOfMonth));
+
+    // Orçamentos pendentes (planejamento) - sem data definida
+    $sqlOrcamentos = "SELECT COUNT(*) as count, COALESCE(SUM(total_budget), 0) as total
+                      FROM projects 
+                      WHERE status = 'planejamento'";
+    $stmt = $db->prepare($sqlOrcamentos);
+    $stmt->execute();
+    $orcamentos = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Receita de Desenvolvimento (projetos em andamento no mês selecionado)
+    // Projeto está em andamento se: start_date <= fim do mês E end_date >= início do mês
+    // E status IN ('em_andamento', 'atrasado')
+    $sqlDev = "SELECT COUNT(*) as count, COALESCE(SUM(total_budget), 0) as total
+               FROM projects 
+               WHERE status IN ('em_andamento', 'atrasado')
+               AND project_type IN ('desenvolvimento', 'desenvolvimento_sustentacao')
+               AND start_date IS NOT NULL AND end_date IS NOT NULL
+               AND start_date <= :endOfMonth AND end_date >= :startOfMonth";
+    $stmt = $db->prepare($sqlDev);
+    $stmt->bindParam(':startOfMonth', $startOfMonth);
+    $stmt->bindParam(':endOfMonth', $endOfMonth);
+    $stmt->execute();
+    $desenvolvimento = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    // Receita de Sustentação (sustentações ativas no mês selecionado)
+    // Sustentação ativa se: maintenance_start_date <= fim do mês E maintenance_end_date >= início do mês
+    // E status NOT IN ('cancelado', 'nao_aprovado')
+    $sqlSust = "SELECT COUNT(*) as count, COALESCE(SUM(maintenance_monthly_value), 0) as total
+                FROM projects 
+                WHERE status NOT IN ('cancelado', 'nao_aprovado', 'planejamento')
+                AND project_type IN ('sustentacao', 'desenvolvimento_sustentacao')
+                AND maintenance_start_date IS NOT NULL AND maintenance_end_date IS NOT NULL
+                AND maintenance_start_date <= :endOfMonth AND maintenance_end_date >= :startOfMonth";
+    $stmt = $db->prepare($sqlSust);
+    $stmt->bindParam(':startOfMonth', $startOfMonth);
+    $stmt->bindParam(':endOfMonth', $endOfMonth);
+    $stmt->execute();
+    $sustentacao = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    return [
+        'orcamentos_count' => (int) $orcamentos['count'],
+        'orcamentos_total' => (float) $orcamentos['total'],
+        'desenvolvimento_count' => (int) $desenvolvimento['count'],
+        'desenvolvimento_total' => (float) $desenvolvimento['total'],
+        'sustentacao_count' => (int) $sustentacao['count'],
+        'sustentacao_total' => (float) $sustentacao['total']
+    ];
+}
+
+// Meses para select
+$meses = [
+    1 => 'Janeiro',
+    2 => 'Fevereiro',
+    3 => 'Março',
+    4 => 'Abril',
+    5 => 'Maio',
+    6 => 'Junho',
+    7 => 'Julho',
+    8 => 'Agosto',
+    9 => 'Setembro',
+    10 => 'Outubro',
+    11 => 'Novembro',
+    12 => 'Dezembro'
+];
 
 require_once 'views/layouts/header.php';
 ?>
 
 <div class="row mb-4 fade-in">
     <div class="col-12">
-        <h1 class="h3 mb-1 text-dark fw-bold">Dashboard</h1>
-        <p class="text-muted">Visão geral de seus projetos e finanças</p>
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 mb-1 text-dark fw-bold">Dashboard</h1>
+                <p class="text-muted">Visão geral de seus projetos e finanças</p>
+            </div>
+            <form method="GET" class="d-flex gap-2 align-items-center">
+                <select name="month" class="form-select form-select-sm" style="width: 130px;"
+                    onchange="this.form.submit()">
+                    <?php foreach ($meses as $num => $nome): ?>
+                        <option value="<?php echo $num; ?>" <?php echo $selectedMonth == $num ? 'selected' : ''; ?>>
+                            <?php echo $nome; ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="year" class="form-select form-select-sm" style="width: 90px;"
+                    onchange="this.form.submit()">
+                    <?php for ($y = date('Y') - 2; $y <= date('Y') + 1; $y++): ?>
+                        <option value="<?php echo $y; ?>" <?php echo $selectedYear == $y ? 'selected' : ''; ?>>
+                            <?php echo $y; ?></option>
+                    <?php endfor; ?>
+                </select>
+            </form>
+        </div>
     </div>
 </div>
 
-<!-- Estatísticas -->
+<!-- Estatísticas Mensais -->
 <div class="row mb-4 fade-in">
-    <div class="col-md-6 col-lg-3 mb-3">
+    <div class="col-md-6 col-lg-4 mb-3">
         <div class="stat-card total">
-            <h6>Projetos em Planejamento</h6>
-            <div class="value"><?php echo $summary['count_planejamento']; ?></div>
-            <small class="text-muted">Propostas enviadas</small>
+            <h6><i class="fas fa-file-invoice text-muted me-2"></i>Orçamentos Pendentes</h6>
+            <div class="value">R$ <?php echo format_currency($dashboardData['orcamentos_total']); ?></div>
+            <small class="text-muted"><?php echo $dashboardData['orcamentos_count']; ?> propostas aguardando
+                aprovação</small>
         </div>
     </div>
-    <div class="col-md-6 col-lg-3 mb-3">
+    <div class="col-md-6 col-lg-4 mb-3">
         <div class="stat-card budget">
-            <h6>Orçamento (Propostas)</h6>
-            <div class="value">R$ <?php echo format_currency($summary['total_orcamento_propostas']); ?></div>
-            <small class="text-muted">Aguardando aprovação</small>
+            <h6><i class="fas fa-code text-muted me-2"></i>Receita Desenvolvimento</h6>
+            <div class="value">R$ <?php echo format_currency($dashboardData['desenvolvimento_total']); ?></div>
+            <small class="text-muted"><?php echo $dashboardData['desenvolvimento_count']; ?> projetos ativos em
+                <?php echo $meses[$selectedMonth]; ?></small>
         </div>
     </div>
-    <div class="col-md-6 col-lg-3 mb-3">
+    <div class="col-md-6 col-lg-4 mb-3">
         <div class="stat-card spent">
-            <h6>Recebíveis</h6>
-            <div class="value">R$ <?php echo format_currency($summary['total_recebiveis']); ?></div>
-            <small class="text-muted">Aprovados</small>
-        </div>
-    </div>
-    <div class="col-md-6 col-lg-3 mb-3">
-        <div class="stat-card duration">
-            <h6>Sustentação Mensal</h6>
-            <div class="value">R$ <?php echo format_currency($summary['total_sustentacao_mensal']); ?></div>
-            <small class="text-muted">Recorrente</small>
+            <h6><i class="fas fa-tools text-muted me-2"></i>Receita Sustentação</h6>
+            <div class="value">R$ <?php echo format_currency($dashboardData['sustentacao_total']); ?></div>
+            <small class="text-muted"><?php echo $dashboardData['sustentacao_count']; ?> sustentações ativas em
+                <?php echo $meses[$selectedMonth]; ?></small>
         </div>
     </div>
 </div>
@@ -79,23 +166,45 @@ require_once 'views/layouts/header.php';
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (count($projects) > 0): ?>
+                            <?php
+                            $projectTypes = [
+                                'desenvolvimento_sustentacao' => 'Dev + Sustentação',
+                                'desenvolvimento' => 'Desenvolvimento',
+                                'sustentacao' => 'Sustentação'
+                            ];
+                            $statusLabels = [
+                                'planejamento' => 'Orçamento',
+                                'em_andamento' => 'Em Andamento',
+                                'concluido' => 'Concluído',
+                                'atrasado' => 'Atrasado',
+                                'cancelado' => 'Cancelado',
+                                'nao_aprovado' => 'Não Aprovado'
+                            ];
+                            if (count($projects) > 0): ?>
                                 <?php foreach (array_slice($projects, 0, 8) as $project): ?>
                                     <tr>
                                         <td class="ps-4">
                                             <div class="fw-600 text-dark">
-                                                <?php echo htmlspecialchars($project['project_name']); ?></div>
+                                                <?php echo htmlspecialchars($project['project_name']); ?>
+                                            </div>
                                         </td>
                                         <td>
                                             <span
-                                                class="badge bg-light text-dark border"><?php echo ucfirst($project['project_type']); ?></span>
+                                                class="badge bg-light text-dark border"><?php echo $projectTypes[$project['project_type']] ?? ucfirst($project['project_type']); ?></span>
                                         </td>
                                         <td>
-                                            R$ <?php echo format_currency($project['total_budget']); ?>
+                                            <?php
+                                            // Mostrar valor conforme tipo e status
+                                            if (in_array($project['status'], ['cancelado', 'nao_aprovado', 'concluido'])) {
+                                                echo '<span class="text-muted">-</span>';
+                                            } else {
+                                                echo 'R$ ' . format_currency($project['total_budget']);
+                                            }
+                                            ?>
                                         </td>
                                         <td>
                                             <span class="status-badge status-<?php echo $project['status']; ?>">
-                                                <?php echo str_replace('_', ' ', ucfirst($project['status'])); ?>
+                                                <?php echo $statusLabels[$project['status']] ?? str_replace('_', ' ', ucfirst($project['status'])); ?>
                                             </span>
                                         </td>
                                         <td class="text-end pe-4">

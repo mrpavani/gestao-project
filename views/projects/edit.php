@@ -71,17 +71,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Mapear tipos de projeto
 $projectTypes = [
-    'site_manutencao' => 'Desenvolver Site e Sustentação',
-    'site_apenas' => 'Desenvolver Apenas o Site',
-    'manutencao' => 'Sustentação'
+    'desenvolvimento_sustentacao' => 'Desenvolvimento + Sustentação',
+    'desenvolvimento' => 'Desenvolvimento',
+    'sustentacao' => 'Sustentação'
 ];
 
 $statusOptions = [
-    'planejamento' => 'Planejamento',
+    'planejamento' => 'Planejamento (Orçamento)',
     'em_andamento' => 'Em Andamento',
     'concluido' => 'Concluído',
     'atrasado' => 'Atrasado',
-    'cancelado' => 'Cancelado'
+    'cancelado' => 'Cancelado',
+    'nao_aprovado' => 'Não Aprovado'
 ];
 
 require_once '../../views/layouts/header.php';
@@ -109,7 +110,8 @@ require_once '../../views/layouts/header.php';
             <div class="card-header bg-white py-3 border-bottom">
                 <div class="d-flex justify-content-between align-items-center">
                     <h6 class="mb-0 fw-bold text-primary">#<?php echo $project->id; ?> -
-                        <?php echo htmlspecialchars($project->project_name); ?></h6>
+                        <?php echo htmlspecialchars($project->project_name); ?>
+                    </h6>
                     <span class="badge bg-light text-dark border">
                         <?php echo ($project->created_at ? 'Criado em ' . date('d/m/Y', strtotime($project->created_at)) : ''); ?>
                     </span>
@@ -166,17 +168,23 @@ require_once '../../views/layouts/header.php';
                         <div class="col-md-6">
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <label class="form-label fw-bold small text-uppercase text-muted">Início *</label>
-                                    <input type="date" class="form-control" name="start_date"
-                                        value="<?php echo $project->start_date; ?>" required>
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Início <span
+                                            class="date-required-hint text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="start_date" id="start_date"
+                                        value="<?php echo $project->start_date; ?>">
+                                    <div class="invalid-feedback" id="error_start_date"></div>
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label fw-bold small text-uppercase text-muted">Término *</label>
-                                    <input type="date" class="form-control" name="end_date"
-                                        value="<?php echo $project->end_date; ?>" required>
+                                    <label class="form-label fw-bold small text-uppercase text-muted">Término <span
+                                            class="date-required-hint text-danger">*</span></label>
+                                    <input type="date" class="form-control" name="end_date" id="end_date"
+                                        value="<?php echo $project->end_date; ?>">
                                     <div class="invalid-feedback" id="error_end_date"></div>
                                 </div>
                             </div>
+                            <small class="text-muted" id="date_hint" style="display:none;"><i
+                                    class="fas fa-info-circle"></i> Datas são opcionais para Planejamento (orçamento
+                                pendente)</small>
                         </div>
                     </div>
 
@@ -222,7 +230,8 @@ require_once '../../views/layouts/header.php';
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small text-uppercase text-muted">Status *</label>
-                            <select class="form-select" name="status" required>
+                            <select class="form-select" name="status" id="status_select" required
+                                onchange="toggleDateRequirement()">
                                 <?php foreach ($statusOptions as $key => $label): ?>
                                     <option value="<?php echo $key; ?>" <?php echo $project->status === $key ? 'selected' : ''; ?>>
                                         <?php echo $label; ?>
@@ -231,6 +240,89 @@ require_once '../../views/layouts/header.php';
                             </select>
                         </div>
                     </div>
+
+                    <hr class="my-4">
+
+                    <?php
+                    // Contador de credenciais
+                    echo '<script>let credentialCount = (typeof initialCredentialCount !== \'undefined\') ? initialCredentialCount : 1;</script>';
+                    $credentials = $projectController->getCredentials($project->id);
+                    ?>
+                    <div class="mb-4">
+                        <h6 class="fw-bold text-dark mb-3">
+                            <i class="fas fa-key text-muted me-2"></i> Credenciais de Acesso <small
+                                class="text-muted fw-normal">(Opcional)</small>
+                        </h6>
+                        <div id="credentials_container">
+                            <?php
+                            $credCount = 0;
+                            if (!empty($credentials)):
+                                foreach ($credentials as $cred):
+                                    ?>
+                                    <div class="credential-item mb-3 p-3 bg-light rounded border border-light">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="badge bg-secondary">Acesso #<?php echo $credCount + 1; ?></span>
+                                            <button type="button"
+                                                class="btn btn-xs btn-link text-danger p-0 text-decoration-none"
+                                                onclick="removeCredential(this)">
+                                                <i class="fas fa-times"></i> Remover
+                                            </button>
+                                        </div>
+                                        <div class="row g-2">
+                                            <div class="col-md-3">
+                                                <label class="form-label small">Tipo de Acesso</label>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    name="credentials[<?php echo $credCount; ?>][access_type]"
+                                                    value="<?php echo htmlspecialchars($cred['access_type']); ?>"
+                                                    placeholder="FTP, SSH, Admin...">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label small">URL/Host</label>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    name="credentials[<?php echo $credCount; ?>][server_url]"
+                                                    value="<?php echo htmlspecialchars($cred['server_url']); ?>"
+                                                    placeholder="ex: ftp.site.com">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label class="form-label small">Usuário</label>
+                                                <input type="text" class="form-control form-control-sm"
+                                                    name="credentials[<?php echo $credCount; ?>][username]"
+                                                    value="<?php echo htmlspecialchars($cred['username']); ?>">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label small">Senha</label>
+                                                <div class="input-group input-group-sm">
+                                                    <input type="password" class="form-control"
+                                                        name="credentials[<?php echo $credCount; ?>][password]"
+                                                        value="<?php echo htmlspecialchars($cred['password']); ?>">
+                                                    <button class="btn btn-outline-secondary" type="button"
+                                                        onclick="togglePassword(this)">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 mt-2">
+                                                <label class="form-label small">Observações</label>
+                                                <textarea class="form-control form-control-sm"
+                                                    name="credentials[<?php echo $credCount; ?>][notes]" rows="1"
+                                                    placeholder="Detalhes adicionais..."><?php echo htmlspecialchars($cred['notes']); ?></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <?php
+                                    $credCount++;
+                                endforeach;
+                            endif;
+                            ?>
+                        </div>
+
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCredential()">
+                            <i class="fas fa-plus"></i> Adicionar Acesso
+                        </button>
+                    </div>
+
+                    <!-- Passar contagem para JS -->
+                    <script>let initialCredentialCount = <?php echo $credCount; ?>;</script>
 
                     <!-- Campo oculto para referrer -->
                     <input type="hidden" name="referrer"
@@ -410,6 +502,42 @@ require_once '../../views/layouts/header.php';
             alert(message);
         }
     }
+
+    // Toggle date requirement based on status
+    function toggleDateRequirement() {
+        const status = document.getElementById('status_select').value;
+        const dateHints = document.querySelectorAll('.date-required-hint');
+        const dateHint = document.getElementById('date_hint');
+        const isPlanejamento = (status === 'planejamento' || status === 'nao_aprovado');
+        
+        dateHints.forEach(h => h.style.display = isPlanejamento ? 'none' : 'inline');
+        if (dateHint) dateHint.style.display = isPlanejamento ? 'block' : 'none';
+    }
+
+    // Run on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        toggleDateRequirement();
+    });
+
+    // Date validation on submit
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const status = document.getElementById('status_select').value;
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+        
+        if (status !== 'planejamento' && status !== 'nao_aprovado') {
+            if (!startDate) {
+                showFieldError('#start_date', 'Data de início é obrigatória para este status.');
+                e.preventDefault();
+                return false;
+            }
+            if (!endDate) {
+                showFieldError('#end_date', 'Data de término é obrigatória para este status.');
+                e.preventDefault();
+                return false;
+            }
+        }
+    }, true);
 </script>
 
 <?php require_once '../../views/layouts/footer.php'; ?>
