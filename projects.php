@@ -80,7 +80,7 @@ require_once 'views/layouts/header.php';
         <div class="stat-card duration">
             <h6>Orçamento Manutenção</h6>
             <div class="value">R$
-                <?php echo format_currency(isset($summary['total_budget_maintenance']) ? $summary['total_budget_maintenance'] : 0); ?>
+                <?php echo format_currency(isset($summary['total_recebiveis']) ? $summary['total_recebiveis'] : 0); ?>
             </div>
             <small
                 class="text-muted"><?php echo isset($summary['count_maintenance']) ? $summary['count_maintenance'] : 0; ?>
@@ -220,6 +220,11 @@ require_once 'views/layouts/header.php';
                                             <a href="views/projects/edit.php?id=<?php echo $project['id']; ?>"
                                                 class="btn btn-outline-secondary" title="Editar">
                                                 <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="#"
+                                                onclick="if(confirm('Tem certeza que deseja excluir este projeto?')) window.location.href='views/projects/delete.php?id=<?php echo $project['id']; ?>'; return false;"
+                                                class="btn btn-outline-danger" title="Excluir">
+                                                <i class="fas fa-trash-alt"></i>
                                             </a>
                                         </div>
                                     </div>

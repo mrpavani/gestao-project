@@ -1,224 +1,381 @@
 :root {
-    /* Colors - Modern Palette */
-    --primary-color: #4361ee;
-    --secondary-color: #3f37c9;
-    --success-color: #4cc9f0;
-    --danger-color: #f72585;
-    --warning-color: #fca311;
-    --info-color: #4895ef;
+    /* --- Modern Fluid Color Palette --- */
+    /* Primary Brand - Vivid yet professional Blue */
+    --primary-color: #3b82f6; /* Blue-500 */
+    --primary-hover: #2563eb; /* Blue-600 */
+    --primary-light: #eff6ff; /* Blue-50 */
     
-    --light-bg: #f3f4f6;
-    --dark-text: #1f2937;
-    --light-text: #6b7280;
-    --border-color: #e5e7eb;
+    /* Secondary/Accent */
+    --secondary-color: #6366f1; /* Indigo-500 */
+    
+    /* Semantic Colors */
+    --success-color: #10b981; /* Emerald-500 */
+    --success-bg: #d1fae5; /* Emerald-100 */
+    
+    --warning-color: #f59e0b; /* Amber-500 */
+    --warning-bg: #fef3c7; /* Amber-100 */
+    
+    --danger-color: #ef4444; /* Red-500 */
+    --danger-bg: #fee2e2; /* Red-100 */
+    
+    --info-color: #0ea5e9; /* Sky-500 */
+    
+    /* Neutrals & Backgrounds */
+    --bg-body: #f8fafc; /* Slate-50 - Ultra light cool gray */
+    --bg-card: #ffffff;
+    
+    --text-primary: #1e293b; /* Slate-800 - Soft dark */
+    --text-secondary: #64748b; /* Slate-500 - Muted */
+    --text-tertiary: #94a3b8; /* Slate-400 */
+    
+    --border-color: #e2e8f0; /* Slate-200 */
     
     /* Sidebar */
-    --sidebar-width: 260px;
+    --sidebar-width: 280px;
     --sidebar-bg: #ffffff;
-    --sidebar-text: #4b5563;
-    --sidebar-active-bg: #eff6ff;
-    --sidebar-active-text: #4361ee;
+    --sidebar-border: transparent; /* Removing harsh borders */
     
-    /* Spacing & Radius */
-    --border-radius-sm: 0.375rem;
-    --border-radius-md: 0.75rem;
-    --border-radius-lg: 1rem;
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    /* Dimensions & Spacing */
+    --header-height: 70px;
+    --border-radius-sm: 0.5rem;   /* 8px */
+    --border-radius-md: 1rem;     /* 16px - Much softer */
+    --border-radius-lg: 1.5rem;   /* 24px */
+    --border-radius-pill: 9999px;
+    
+    /* Modern Shadows (Diffuse) */
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-soft: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.01);
 }
 
+/* Base Setup */
 body {
-    background-color: var(--light-bg);
-    color: var(--dark-text);
+    background-color: var(--bg-body);
+    color: var(--text-primary);
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
 }
 
-/* Layout System */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-primary);
+    font-weight: 700;
+    letter-spacing: -0.025em; /* Tight tracking for modern feel */
+}
+
+a {
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+/* Layout Wrapper */
 .wrapper {
+    display: flex;
     width: 100%;
     align-items: stretch;
 }
 
+/* --- Floating Modern Sidebar --- */
 #sidebar {
     min-width: var(--sidebar-width);
     max-width: var(--sidebar-width);
     background: var(--sidebar-bg);
-    color: var(--sidebar-text);
-    transition: all 0.3s;
-    min-height: 100vh;
-    border-right: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    transition: all 0.3s ease;
+    height: 100vh;
     position: fixed;
-    z-index: 1000;
+    z-index: 100;
+    /* No border, just faint shadow or space */
+    /* box-shadow: 1px 0 0 var(--border-color); */ 
 }
 
+/* Sidebar Header */
+.sidebar-header {
+    padding: 2rem 1.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar-brand {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--primary-color);
+    letter-spacing: -0.03em;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sidebar-brand i {
+    font-size: 1.4rem;
+    filter: drop-shadow(0 4px 6px rgba(59, 130, 246, 0.3));
+}
+
+/* Navigation List */
+.components {
+    padding: 1rem 1rem;
+}
+
+.components li {
+    margin-bottom: 0.5rem;
+}
+
+.components li a {
+    padding: 0.875rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-radius: var(--border-radius-md); /* Fully rounded items */
+    transition: all 0.2s ease;
+}
+
+.components li a i {
+    font-size: 1.1rem;
+    width: 24px;
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+/* Hover & Active States */
+.components li a:hover {
+    background-color: var(--bg-body);
+    color: var(--primary-color);
+}
+
+.components li a:hover i {
+    transform: translateX(2px);
+}
+
+.components li a.active {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(59, 130, 246, 0.05);
+}
+
+/* Main Content Area */
 #content {
     width: 100%;
     margin-left: var(--sidebar-width);
-    padding: 2rem;
+    padding: 2.5rem;
+    min-height: 100vh;
     transition: all 0.3s;
 }
 
-/* Mobile responsive */
+/* --- Modern Card System --- */
+.card {
+    background: var(--bg-card);
+    border: none;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm); /* Subtle depth */
+    transition: transform 0.2s, box-shadow 0.2s;
+    overflow: hidden; /* For rounded corners image clipping */
+}
+
+/* Hover lift effect for interactive cards */
+.card.transition-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+    background: transparent;
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    background: transparent;
+    border-top: 1px solid var(--border-color);
+    padding: 1.25rem 1.5rem;
+}
+
+/* --- Stat Cards (Modernized) --- */
+.stat-card {
+    background: white;
+    padding: 1.75rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-sm);
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-soft);
+    border-color: var(--primary-light);
+}
+
+/* Decorative background circle for stats */
+.stat-card::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    opacity: 0.1;
+    z-index: 0;
+}
+
+.stat-card.total::after { background: var(--primary-color); }
+.stat-card.budget::after { background: var(--success-color); }
+.stat-card.spent::after { background: var(--danger-color); }
+.stat-card.duration::after { background: var(--warning-color); }
+
+.stat-card h6 {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.stat-card .value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    position: relative;
+    z-index: 1;
+    letter-spacing: -0.03em;
+}
+
+.stat-card small {
+    position: relative;
+    z-index: 1;
+    font-weight: 500;
+}
+
+/* --- Buttons --- */
+.btn {
+    padding: 0.6rem 1.25rem;
+    font-weight: 600;
+    border-radius: var(--border-radius-sm);
+    transition: all 0.2s;
+    letter-spacing: 0.01em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.5);
+    transform: translateY(-1px);
+}
+
+/* Pill buttons for top actions */
+.btn-pill {
+    border-radius: var(--border-radius-pill);
+}
+
+/* --- Status Badges --- */
+.status-badge {
+    padding: 0.35em 0.85em;
+    border-radius: var(--border-radius-pill);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* Soft badges (pastels) */
+.status-planejamento { background-color: #f1f5f9; color: #64748b; } /* Slate-100 */
+.status-em_andamento { background-color: var(--primary-light); color: var(--primary-color); }
+.status-concluido { background-color: var(--success-bg); color: #059669; }
+.status-atrasado { background-color: var(--danger-bg); color: var(--danger-color); }
+.status-cancelado { background-color: #f3f4f6; color: #9ca3af; text-decoration: line-through; }
+
+/* --- Forms (Muted & Clean) --- */
+.form-control, .form-select {
+    border-color: var(--border-color);
+    border-radius: var(--border-radius-sm);
+    padding: 0.7rem 1rem;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    background-color: #fff;
+    transition: all 0.2s;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); /* Soft glow focus */
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+}
+
+/* --- Tables --- */
+.table {
+    margin-bottom: 0;
+}
+.table thead th {
+    background-color: #f8fafc;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid var(--border-color);
+    padding: 1rem;
+}
+
+.table td {
+    padding: 1rem;
+    vertical-align: middle;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Mobile Responsive */
 @media (max-width: 768px) {
     #sidebar {
         margin-left: calc(-1 * var(--sidebar-width));
+        box-shadow: 4px 0 15px rgba(0,0,0,0.1);
     }
     #sidebar.active {
         margin-left: 0;
     }
     #content {
         margin-left: 0;
-        padding: 1rem;
+        padding: 1.5rem 1rem;
+    }
+    .wrapper.active #content {
+        /* Optional: darken content or push it */
     }
 }
 
-/* Sidebar Components */
-.sidebar-header {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+/* Animation utilities */
+@keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
-.sidebar-brand {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+.fade-in {
+    animation: slideUpFade 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
-.components {
-    padding: 1rem 0;
-}
-
-.components li {
-    list-style: none;
-}
-
-.components li a {
-    padding: 0.75rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    font-size: 0.95rem;
-    font-weight: 500;
-    color: var(--sidebar-text);
-    text-decoration: none;
-    transition: all 0.2s;
-    border-left: 3px solid transparent;
-}
-
-.components li a:hover {
-    color: var(--primary-color);
-    background: var(--light-bg);
-}
-
-.components li a.active {
-    background: var(--sidebar-active-bg);
-    color: var(--sidebar-active-text);
-    border-left-color: var(--primary-color);
-}
-
-/* UI Components overrides */
-.card {
-    border: none;
-    background: white;
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 1.5rem;
-}
-
-/* Stat Cards (Redesigned) */
-.stat-card {
-    background: white;
-    padding: 1.5rem;
-    border-radius: var(--border-radius-md);
-    box-shadow: var(--shadow-sm);
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    transition: transform 0.2s;
-    border-left: 4px solid transparent;
-}
-
-.stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-}
-
-.stat-card.total { border-left-color: var(--primary-color); }
-.stat-card.budget { border-left-color: var(--success-color); }
-.stat-card.spent { border-left-color: var(--danger-color); }
-.stat-card.duration { border-left-color: var(--warning-color); }
-
-.stat-card h6 {
-    color: var(--light-text);
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-}
-
-.stat-card .value {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--dark-text);
-}
-
-/* --- Legacy / Other Components Support --- */
-
-/* Project Badges */
-.status-badge {
-    font-size: 0.75em;
-    font-weight: 600;
-    padding: 0.35em 0.8em;
-    border-radius: 9999px;
-}
-.status-planejamento { background-color: var(--light-text); color: white; }
-.status-em_andamento { background-color: var(--primary-color); color: white; }
-.status-concluido { background-color: #10b981; color: white; } /* Success green */
-.status-atrasado { background-color: var(--danger-color); color: white; }
-.status-cancelado { background-color: var(--light-text); color: white; }
-
-/* Buttons Modernized */
-.btn {
-    font-weight: 500;
-    border-radius: var(--border-radius-sm);
-    padding: 0.5rem 1rem;
-    transition: all 0.2s;
-}
-
-.btn-primary {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
-}
-.btn-primary:hover {
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
-}
-
-/* Table styling */
-.table th {
-    font-weight: 600;
-    color: var(--light-text);
-    text-transform: uppercase;
-    font-size: 0.75rem;
-    letter-spacing: 0.05em;
-    background-color: #f9fafb;
-}
-
-/* Utilities */
-.fw-600 { font-weight: 600; }
-.text-muted { color: var(--light-text) !important; }
-
-/* Animation */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-.fade-in { animation: fadeIn 0.4s ease-out; }

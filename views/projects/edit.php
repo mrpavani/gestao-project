@@ -329,11 +329,17 @@ require_once '../../views/layouts/header.php';
                     <input type="hidden" name="referrer"
                         value="<?php echo htmlspecialchars($_SERVER['HTTP_REFERER'] ?? 'projects.php'); ?>">
 
-                    <div class="d-flex justify-content-end gap-2 pt-3 border-top mt-4">
-                        <a href="../../projects.php" class="btn btn-light border">Cancelar</a>
-                        <button type="submit" class="btn btn-primary px-4">
-                            <i class="fas fa-save me-1"></i> Salvar Alterações
+                    <div class="d-flex justify-content-between pt-3 border-top mt-4">
+                        <button type="button" class="btn btn-outline-danger"
+                            onclick="if(confirm('Tem certeza que deseja excluir este projeto?')) window.location.href='delete.php?id=<?php echo $project->id; ?>';">
+                            <i class="fas fa-trash-alt me-1"></i> Excluir Projeto
                         </button>
+                        <div class="d-flex gap-2">
+                            <a href="../../projects.php" class="btn btn-light border">Cancelar</a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-1"></i> Salvar Alterações
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -548,7 +554,67 @@ require_once '../../views/layouts/header.php';
     document.addEventListener('DOMContentLoaded', function () {
         toggleDateRequirement();
         toggleMaintenanceFields();
+        setupAutoCalculation();
     });
+
+    function setupAutoCalculation() {
+        // Listeners for auto-calc
+        const inputs = [
+            document.getElementById('maintenance_start_date'),
+            document.getElementById('maintenance_end_date'),
+            document.getElementById('maintenance_monthly_value')
+        ];
+
+        inputs.forEach(input => {
+            if (input) {
+                input.addEventListener('change', calculateTotalBudget);
+                input.addEventListener('blur', calculateTotalBudget);
+            }
+        });
+    }
+
+    function calculateTotalBudget() {
+        const projectTypeSelect = document.getElementById('project_type_select');
+        if (!projectTypeSelect) return;
+        const projectType = projectTypeSelect.value;
+        
+        // Only for Sustentação (pure)
+        if (projectType !== 'sustentacao') return;
+
+        const startStr = document.getElementById('maintenance_start_date').value;
+        const endStr = document.getElementById('maintenance_end_date').value;
+        const monthlyValStr = document.getElementById('maintenance_monthly_value').value;
+        const totalBudgetInput = document.getElementsByName('total_budget')[0];
+
+        if (!startStr || !endStr || !monthlyValStr) return;
+
+        // Calculate months
+        const startDate = new Date(startStr);
+        const endDate = new Date(endStr);
+        
+        if (startDate > endDate) return;
+
+        let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+        
+        if (endDate.getDate() >= startDate.getDate()) {
+            months += 1;
+        }
+
+        if (months <= 0) months = 0;
+
+        // Parse currency
+        let cleanVal = monthlyValStr.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+        let monthlyVal = parseFloat(cleanVal);
+        
+        if (isNaN(monthlyVal)) monthlyVal = 0;
+
+        const total = monthlyVal * months;
+
+        // Format back to PT-BR for display
+        const formattedTotal = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        
+        totalBudgetInput.value = formattedTotal;
+    }
 
     // Date validation on submit
     document.querySelector('form').addEventListener('submit', function (e) {

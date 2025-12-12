@@ -527,7 +527,73 @@ require_once '../../views/layouts/header.php';
     document.addEventListener('DOMContentLoaded', function () {
         toggleDateRequirement();
         toggleMaintenanceFields();
+        setupAutoCalculation();
     });
+
+    function setupAutoCalculation() {
+        // Listeners for auto-calc
+        const inputs = [
+            document.getElementById('maintenance_start_date'),
+            document.getElementById('maintenance_end_date'),
+            document.getElementById('maintenance_monthly_value')
+        ];
+
+        inputs.forEach(input => {
+            if (input) {
+                input.addEventListener('change', calculateTotalBudget);
+                input.addEventListener('blur', calculateTotalBudget);
+            }
+        });
+    }
+
+    function calculateTotalBudget() {
+        const projectType = document.getElementById('project_type_select').value;
+        // Only for Sustentação (pure)
+        if (projectType !== 'sustentacao') return;
+
+        const startStr = document.getElementById('maintenance_start_date').value;
+        const endStr = document.getElementById('maintenance_end_date').value;
+        const monthlyValStr = document.getElementById('maintenance_monthly_value').value;
+        const totalBudgetInput = document.getElementsByName('total_budget')[0];
+
+        if (!startStr || !endStr || !monthlyValStr) return;
+
+        // Calculate months
+        const startDate = new Date(startStr);
+        const endDate = new Date(endStr);
+
+        if (startDate > endDate) return;
+
+        let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+        // Incluir mês inicial se dia_fim >= dia_inicio, lógica aproximada ou usar regra de negócio
+        // Usando lógica simples: diferença de meses + 1 se abrange o período
+        // Mas a regra no backend é:
+        // $monthsTotal = $years * 12 + $months;
+        // if (day(d2) >= day(d1)) monthsTotal += 1;
+
+        if (endDate.getDate() >= startDate.getDate()) {
+            months += 1;
+        }
+
+        if (months <= 0) months = 0;
+
+        // Parse currency
+        // Remove R$, dots, replace comma with dot
+        let cleanVal = monthlyValStr.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+        let monthlyVal = parseFloat(cleanVal);
+
+        if (isNaN(monthlyVal)) monthlyVal = 0;
+
+        const total = monthlyVal * months;
+
+        // Format back to PT-BR for display
+        const formattedTotal = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+        // Update Total Budget field
+        // Only if user hasn't manually edited it? Or just overwrite?
+        // Let's overwrite as "Calculos não sendo feitos" implies they want help.
+        totalBudgetInput.value = formattedTotal;
+    }
 
     // Override form submit to validate dates conditionally
     const originalSubmitHandler = document.querySelector('form').onsubmit;
