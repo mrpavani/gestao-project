@@ -139,7 +139,8 @@ require_once '../../views/layouts/header.php';
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase text-muted">Tipo do Projeto *</label>
-                            <select class="form-select" name="project_type" required>
+                            <select class="form-select" name="project_type" id="project_type_select" required
+                                onchange="toggleMaintenanceFields()">
                                 <option value="">Selecione...</option>
                                 <?php foreach ($projectTypes as $key => $label): ?>
                                     <option value="<?php echo $key; ?>" <?php echo $project->project_type === $key ? 'selected' : ''; ?>>
@@ -509,22 +510,52 @@ require_once '../../views/layouts/header.php';
         const dateHints = document.querySelectorAll('.date-required-hint');
         const dateHint = document.getElementById('date_hint');
         const isPlanejamento = (status === 'planejamento' || status === 'nao_aprovado');
-        
+
         dateHints.forEach(h => h.style.display = isPlanejamento ? 'none' : 'inline');
         if (dateHint) dateHint.style.display = isPlanejamento ? 'block' : 'none';
     }
 
+    // Toggle maintenance fields based on project type
+    function toggleMaintenanceFields() {
+        const projectTypeSelect = document.getElementById('project_type_select');
+        if (!projectTypeSelect) return;
+
+        const projectType = projectTypeSelect.value;
+        const maintenanceFields = [
+            document.getElementById('maintenance_start_date'),
+            document.getElementById('maintenance_end_date'),
+            document.getElementById('maintenance_monthly_value')
+        ];
+
+        // Disable for "desenvolvimento" type, enable for others
+        const shouldDisable = (projectType === 'desenvolvimento');
+
+        maintenanceFields.forEach(field => {
+            if (field) {
+                field.disabled = shouldDisable;
+                if (shouldDisable) {
+                    // Only clear if desired, or keep existing value but disabled
+                    // field.value = ''; 
+                    field.classList.add('bg-light');
+                } else {
+                    field.classList.remove('bg-light');
+                }
+            }
+        });
+    }
+
     // Run on page load
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         toggleDateRequirement();
+        toggleMaintenanceFields();
     });
 
     // Date validation on submit
-    document.querySelector('form').addEventListener('submit', function(e) {
+    document.querySelector('form').addEventListener('submit', function (e) {
         const status = document.getElementById('status_select').value;
         const startDate = document.getElementById('start_date').value;
         const endDate = document.getElementById('end_date').value;
-        
+
         if (status !== 'planejamento' && status !== 'nao_aprovado') {
             if (!startDate) {
                 showFieldError('#start_date', 'Data de início é obrigatória para este status.');
