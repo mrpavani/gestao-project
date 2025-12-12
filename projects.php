@@ -146,93 +146,83 @@ require_once 'views/layouts/header.php';
                 </div>
             </div>
         <?php else: ?>
-            <div class="row g-4">
+            <div class="row g-3">
                 <?php foreach ($projects as $project): ?>
-                    <?php
-                    $today = new DateTime();
-                    $hasEndDate = !empty($project['end_date']);
-                    $endDate = $hasEndDate ? new DateTime($project['end_date']) : null;
-                    $daysLeft = $hasEndDate ? $today->diff($endDate)->days : 0;
-                    $isLate = $hasEndDate && $today > $endDate && $project['status'] != 'concluido';
-                    ?>
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card h-100 border-0 shadow-sm transition-hover">
-                            <!-- Header Card -->
-                            <div
-                                class="card-header bg-white border-bottom pt-3 pb-3 d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h6 class="mb-1 fw-bold text-dark">
-                                        <?php echo htmlspecialchars($project['project_name']); ?>
-                                    </h6>
-                                    <span class="badge bg-light text-secondary border">
-                                        <?php echo htmlspecialchars($projectTypes[$project['project_type']]); ?>
-                                    </span>
-                                </div>
-                                <span class="status-badge status-<?php echo $project['status']; ?>">
-                                    <?php echo htmlspecialchars($statusLabels[$project['status']]); ?>
-                                </span>
-                            </div>
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body p-3">
+                                <div class="row align-items-center">
+                                    <!-- Project Name & Type -->
+                                    <div class="col-md-3">
+                                        <h6 class="mb-1 fw-bold text-dark">
+                                            <?php echo htmlspecialchars($project['project_name']); ?>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <?php echo htmlspecialchars($projectTypes[$project['project_type']]); ?>
+                                        </small>
+                                    </div>
 
-                            <!-- Body Card -->
-                            <div class="card-body">
-                                <p class="card-text text-muted small mb-3">
-                                    <?php echo htmlspecialchars(strlen($project['description']) > 80 ? substr($project['description'], 0, 80) . '...' : $project['description']); ?>
-                                </p>
+                                    <!-- Description -->
+                                    <div class="col-md-3">
+                                        <small class="text-muted">
+                                            <?php echo htmlspecialchars(strlen($project['description']) > 50 ? substr($project['description'], 0, 50) . '...' : $project['description']); ?>
+                                        </small>
+                                    </div>
 
-                                <!-- Info Cards -->
-                                <div class="bg-light p-2 rounded mb-3">
-                                    <div class="d-flex justify-content-between">
+                                    <!-- Budget & Maintenance -->
+                                    <div class="col-md-3">
                                         <?php if ($project['project_type'] != 'sustentacao'): ?>
-                                            <div class="text-center w-100">
+                                            <div class="mb-1">
                                                 <small class="text-muted d-block">Orçamento</small>
                                                 <strong class="text-success">R$
                                                     <?php echo format_currency($project['total_budget']); ?></strong>
                                             </div>
                                         <?php endif; ?>
-
                                         <?php if ($project['project_type'] != 'desenvolvimento'): ?>
-                                            <div
-                                                class="text-center w-100 <?php echo ($project['project_type'] != 'sustentacao') ? 'border-start' : ''; ?>">
+                                            <div>
                                                 <small class="text-muted d-block">Sustentação</small>
                                                 <strong class="text-primary">R$
                                                     <?php echo format_currency($project['maintenance_monthly_value']); ?>/mês</strong>
                                             </div>
                                         <?php endif; ?>
                                     </div>
-                                </div>
 
-                                <!-- Datas -->
-                                <?php if (!empty($project['start_date']) || !empty($project['end_date'])): ?>
-                                    <div class="small text-muted mb-2 d-flex justify-content-between">
-                                        <span><i class="far fa-calendar-check me-1"></i> Início:
-                                            <?php echo !empty($project['start_date']) ? date('d/m/y', strtotime($project['start_date'])) : '-'; ?></span>
-                                        <span><i class="far fa-flag me-1"></i> Fim:
-                                            <?php echo !empty($project['end_date']) ? date('d/m/y', strtotime($project['end_date'])) : '-'; ?></span>
+                                    <!-- Dates & Status -->
+                                    <div class="col-md-2">
+                                        <?php if (!empty($project['start_date'])): ?>
+                                            <small class="text-muted d-block">
+                                                <i class="far fa-calendar-check me-1"></i>
+                                                <?php echo date('d/m/y', strtotime($project['start_date'])); ?>
+                                            </small>
+                                        <?php endif; ?>
+                                        <?php if (!empty($project['end_date'])): ?>
+                                            <small class="text-muted d-block">
+                                                <i class="far fa-flag me-1"></i>
+                                                <?php echo date('d/m/y', strtotime($project['end_date'])); ?>
+                                            </small>
+                                        <?php else: ?>
+                                            <small class="text-muted fst-italic">
+                                                <i class="fas fa-info-circle me-1"></i> Aguardando aprovação
+                                            </small>
+                                        <?php endif; ?>
+                                        <span class="status-badge status-<?php echo $project['status']; ?> mt-2 d-inline-block">
+                                            <?php echo htmlspecialchars($statusLabels[$project['status']]); ?>
+                                        </span>
                                     </div>
-                                <?php else: ?>
-                                    <div class="small text-muted mb-2 fst-italic">
-                                        <i class="fas fa-info-circle me-1"></i> Aguardando aprovação
-                                    </div>
-                                <?php endif; ?>
 
-                                <?php if ($isLate): ?>
-                                    <div class="alert alert-danger py-1 px-2 small mb-0 text-center">
-                                        <i class="fas fa-exclamation-circle"></i> Atrasado
+                                    <!-- Actions -->
+                                    <div class="col-md-1 text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="views/projects/view.php?id=<?php echo $project['id']; ?>"
+                                                class="btn btn-outline-primary" title="Ver">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="views/projects/edit.php?id=<?php echo $project['id']; ?>"
+                                                class="btn btn-outline-secondary" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
                                     </div>
-                                <?php endif; ?>
-                            </div>
-
-                            <!-- Footer com Botões -->
-                            <div class="card-footer bg-white border-top p-3">
-                                <div class="d-grid gap-2 d-flex">
-                                    <a href="views/projects/view.php?id=<?php echo $project['id']; ?>"
-                                        class="btn btn-outline-primary btn-sm flex-grow-1">
-                                        <i class="fas fa-eye"></i> Ver
-                                    </a>
-                                    <a href="views/projects/edit.php?id=<?php echo $project['id']; ?>"
-                                        class="btn btn-outline-secondary btn-sm flex-grow-1">
-                                        <i class="fas fa-edit"></i> Editar
-                                    </a>
                                 </div>
                             </div>
                         </div>

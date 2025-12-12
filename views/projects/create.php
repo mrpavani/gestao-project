@@ -110,7 +110,8 @@ require_once '../../views/layouts/header.php';
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase text-muted">Tipo do Projeto *</label>
-                            <select class="form-select" name="project_type" required>
+                            <select class="form-select" name="project_type" id="project_type_select" required
+                                onchange="toggleMaintenanceFields()">
                                 <option value="">Selecione...</option>
                                 <option value="desenvolvimento_sustentacao">Desenvolvimento + Sustentação</option>
                                 <option value="desenvolvimento">Desenvolvimento</option>
@@ -486,6 +487,31 @@ require_once '../../views/layouts/header.php';
         }
     }
 
+    // Toggle maintenance fields based on project type
+    function toggleMaintenanceFields() {
+        const projectType = document.getElementById('project_type_select').value;
+        const maintenanceFields = [
+            document.getElementById('maintenance_start_date'),
+            document.getElementById('maintenance_end_date'),
+            document.getElementById('maintenance_monthly_value')
+        ];
+
+        // Disable for "desenvolvimento" type, enable for others
+        const shouldDisable = (projectType === 'desenvolvimento');
+
+        maintenanceFields.forEach(field => {
+            if (field) {
+                field.disabled = shouldDisable;
+                if (shouldDisable) {
+                    field.value = '';
+                    field.classList.add('bg-light');
+                } else {
+                    field.classList.remove('bg-light');
+                }
+            }
+        });
+    }
+
     // Toggle date requirement based on status
     function toggleDateRequirement() {
         const status = document.getElementById('status_select').value;
@@ -500,6 +526,7 @@ require_once '../../views/layouts/header.php';
     // Run on page load
     document.addEventListener('DOMContentLoaded', function () {
         toggleDateRequirement();
+        toggleMaintenanceFields();
     });
 
     // Override form submit to validate dates conditionally
