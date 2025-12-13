@@ -163,7 +163,7 @@ require_once 'views/layouts/header.php';
                                     </div>
 
                                     <!-- Description -->
-                                    <div class="col-md-3">
+                                    <div class="col-md-2">
                                         <small class="text-muted">
                                             <?php echo htmlspecialchars(strlen($project['description']) > 50 ? substr($project['description'], 0, 50) . '...' : $project['description']); ?>
                                         </small>
@@ -211,7 +211,7 @@ require_once 'views/layouts/header.php';
                                     </div>
 
                                     <!-- Actions -->
-                                    <div class="col-md-1 text-end">
+                                    <div class="col-md-2 text-end">
                                         <div class="btn-group btn-group-sm">
                                             <a href="views/projects/view.php?id=<?php echo $project['id']; ?>"
                                                 class="btn btn-outline-primary" title="Ver">
