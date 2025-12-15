@@ -74,7 +74,7 @@ class Document
         return false;
     }
 
-    // Deletar documento
+    // Deletar documento//
     public function delete()
     {
         // Primeiro pegar o caminho do arquivo para deletar do disco
