@@ -139,8 +139,8 @@ require_once '../../views/layouts/header.php';
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase text-muted">Tipo do Projeto *</label>
-                            <select class="form-select" name="project_type" id="project_type_select" required
-                                onchange="toggleMaintenanceFields()">
+                            <select class="form-select" id="project_type" name="project_type" required
+                                onchange="toggleDates()">
                                 <option value="">Selecione...</option>
                                 <?php foreach ($projectTypes as $key => $label): ?>
                                     <option value="<?php echo $key; ?>" <?php echo $project->project_type === $key ? 'selected' : ''; ?>>
@@ -171,14 +171,14 @@ require_once '../../views/layouts/header.php';
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-uppercase text-muted">Início <span
                                             class="date-required-hint text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="start_date" id="start_date"
+                                    <input type="date" class="form-control" id="start_date" name="start_date"
                                         value="<?php echo $project->start_date; ?>">
                                     <div class="invalid-feedback" id="error_start_date"></div>
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-uppercase text-muted">Término <span
                                             class="date-required-hint text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="end_date" id="end_date"
+                                    <input type="date" class="form-control" id="end_date" name="end_date"
                                         value="<?php echo $project->end_date; ?>">
                                     <div class="invalid-feedback" id="error_end_date"></div>
                                 </div>
@@ -510,131 +510,142 @@ require_once '../../views/layouts/header.php';
         }
     }
 
-    // Toggle date requirement based on status
-    function toggleDateRequirement() {
-        const status = document.getElementById('status_select').value;
-        const dateHints = document.querySelectorAll('.date-required-hint');
-        const dateHint = document.getElementById('date_hint');
-        const isPlanejamento = (status === 'planejamento' || status === 'nao_aprovado');
+    <script>
+        function toggleMaintenanceFields(select) {
+            // Se select não for passado (chamada inicial), pegar do DOM
+            if (!select) {
+                select = document.getElementById('project_type');
+            }
+            if (!select) return;
 
-        dateHints.forEach(h => h.style.display = isPlanejamento ? 'none' : 'inline');
-        if (dateHint) dateHint.style.display = isPlanejamento ? 'block' : 'none';
-    }
-
-    // Toggle maintenance fields based on project type
-    function toggleMaintenanceFields() {
-        const projectTypeSelect = document.getElementById('project_type_select');
-        if (!projectTypeSelect) return;
-
-        const projectType = projectTypeSelect.value;
-        const maintenanceFields = [
-            document.getElementById('maintenance_start_date'),
-            document.getElementById('maintenance_end_date'),
-            document.getElementById('maintenance_monthly_value')
-        ];
-
-        // Disable for "desenvolvimento" type, enable for others
-        const shouldDisable = (projectType === 'desenvolvimento');
-
-        maintenanceFields.forEach(field => {
-            if (field) {
-                field.disabled = shouldDisable;
-                if (shouldDisable) {
-                    // Only clear if desired, or keep existing value but disabled
-                    // field.value = ''; 
-                    field.classList.add('bg-light');
+            const maintenanceFieldsContainer = document.getElementById('maintenance-fields');
+            // Logic for showing/hiding container if it exists (assuming it wraps the fields)
+            if (maintenanceFieldsContainer) {
+                if (select.value === 'sustentacao' || select.value === 'desenvolvimento_sustentacao') {
+                    maintenanceFieldsContainer.style.display = 'block';
                 } else {
-                    field.classList.remove('bg-light');
+                    maintenanceFieldsContainer.style.display = 'none';
                 }
             }
-        });
-    }
+            
+            // Logic for disabling/enabling specific inputs
+            const type = select.value;
+            const shouldDisable = (type === 'desenvolvimento');
+            
+            const maintenanceInputs = [
+                document.getElementById('maintenance_start_date'),
+                document.getElementById('maintenance_end_date'),
+                document.getElementById('maintenance_monthly_value')
+            ];
 
-    // Run on page load
-    document.addEventListener('DOMContentLoaded', function () {
-        toggleDateRequirement();
-        toggleMaintenanceFields();
-        setupAutoCalculation();
-    });
+            maintenanceInputs.forEach(field => {
+                if (field) {
+                    field.disabled = shouldDisable;
+                    if (shouldDisable) {
+                        field.classList.add('bg-light');
+                        // Optional: clear value
+                        // field.value = ''; 
+                    } else {
+                        field.classList.remove('bg-light');
+                    }
+                }
+            });
 
-    function setupAutoCalculation() {
-        // Listeners for auto-calc
-        const inputs = [
-            document.getElementById('maintenance_start_date'),
-            document.getElementById('maintenance_end_date'),
-            document.getElementById('maintenance_monthly_value')
-        ];
-
-        inputs.forEach(input => {
-            if (input) {
-                input.addEventListener('change', calculateTotalBudget);
-                input.addEventListener('blur', calculateTotalBudget);
-            }
-        });
-    }
-
-    function calculateTotalBudget() {
-        const projectTypeSelect = document.getElementById('project_type_select');
-        if (!projectTypeSelect) return;
-        const projectType = projectTypeSelect.value;
-        
-        // Only for Sustentação (pure)
-        if (projectType !== 'sustentacao') return;
-
-        const startStr = document.getElementById('maintenance_start_date').value;
-        const endStr = document.getElementById('maintenance_end_date').value;
-        const monthlyValStr = document.getElementById('maintenance_monthly_value').value;
-        const totalBudgetInput = document.getElementsByName('total_budget')[0];
-
-        if (!startStr || !endStr || !monthlyValStr) return;
-
-        // Calculate months
-        const startDate = new Date(startStr);
-        const endDate = new Date(endStr);
-        
-        if (startDate > endDate) return;
-
-        let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-        
-        if (endDate.getDate() >= startDate.getDate()) {
-            months += 1;
+            toggleDates();
         }
 
-        if (months <= 0) months = 0;
-
-        // Parse currency
-        let cleanVal = monthlyValStr.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
-        let monthlyVal = parseFloat(cleanVal);
-        
-        if (isNaN(monthlyVal)) monthlyVal = 0;
-
-        const total = monthlyVal * months;
-
-        // Format back to PT-BR for display
-        const formattedTotal = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        
-        totalBudgetInput.value = formattedTotal;
-    }
-
-    // Date validation on submit
-    document.querySelector('form').addEventListener('submit', function (e) {
-        const status = document.getElementById('status_select').value;
-        const startDate = document.getElementById('start_date').value;
-        const endDate = document.getElementById('end_date').value;
-
-        if (status !== 'planejamento' && status !== 'nao_aprovado') {
-            if (!startDate) {
-                showFieldError('#start_date', 'Data de início é obrigatória para este status.');
-                e.preventDefault();
-                return false;
-            }
-            if (!endDate) {
-                showFieldError('#end_date', 'Data de término é obrigatória para este status.');
-                e.preventDefault();
-                return false;
+        function toggleDates() {
+            const projectTypeSelect = document.getElementById('project_type');
+            if (!projectTypeSelect) return;
+            
+            const type = projectTypeSelect.value;
+            const startDate = document.getElementById('start_date');
+            const endDate = document.getElementById('end_date');
+            
+            if (type === 'sustentacao') {
+                startDate.required = false;
+                endDate.required = false;
+                // Visual feedback (optional)
+                document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'none');
+            } else {
+                startDate.required = true;
+                endDate.required = true;
+                document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'inline');
             }
         }
-    }, true);
-</script>
+        
+        function setupAutoCalculation() {
+             const inputs = [
+                document.getElementById('maintenance_start_date'),
+                document.getElementById('maintenance_end_date'),
+                document.getElementById('maintenance_monthly_value')
+            ];
 
-<?php require_once '../../views/layouts/footer.php'; ?>
+            inputs.forEach(input => {
+                if (input) {
+                    input.addEventListener('change', calculateTotalBudget);
+                    input.addEventListener('blur', calculateTotalBudget);
+                }
+            });
+        }
+
+        function calculateTotalBudget() {
+            const projectTypeSelect = document.getElementById('project_type');
+            if (!projectTypeSelect) return;
+            const projectType = projectTypeSelect.value;
+
+            // Only for Sustentação (pure)
+            if (projectType !== 'sustentacao') return;
+
+            const startStr = document.getElementById('maintenance_start_date').value;
+            const endStr = document.getElementById('maintenance_end_date').value;
+            const monthlyValStr = document.getElementById('maintenance_monthly_value').value;
+            const totalBudgetInput = document.querySelector('input[name="total_budget"]');
+
+            if (!startStr || !endStr || !monthlyValStr || !totalBudgetInput) return;
+
+            // Calculate months
+            const startDate = new Date(startStr);
+            const endDate = new Date(endStr);
+
+            if (startDate > endDate) return;
+
+            let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+
+            if (endDate.getDate() >= startDate.getDate()) {
+                months += 1;
+            }
+
+            if (months <= 0) months = 0;
+
+            // Parse currency 
+            // formatCurrency helper makes it R$ ... we need to parse that or raw value
+            // Input mask lib usually keeps raw value? No, previous code parsed manually.
+            
+            let cleanVal = monthlyValStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
+            // If the user typed 1.000,00 -> "1000.00"
+            // If the user typed 1000 -> "1000"
+            
+            let monthlyVal = parseFloat(cleanVal);
+            if (isNaN(monthlyVal)) monthlyVal = 0;
+
+            const total = monthlyVal * months;
+
+            // Format back to PT-BR for display using our formatCurrency function if available, 
+            // or manual formatter matching the expected input format (R$ ...)
+            
+            // Reusing existing formatCurrency function from earlier in file
+            totalBudgetInput.value = formatCurrency(total.toFixed(2).replace('.', ''));
+        }
+
+        // Run on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('project_type');
+            if (select) {
+                toggleMaintenanceFields(select);
+            }
+            setupAutoCalculation();
+        });
+    </script>
+
+    <?php require_once '../../views/layouts/footer.php'; ?>

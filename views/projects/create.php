@@ -110,8 +110,8 @@ require_once '../../views/layouts/header.php';
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase text-muted">Tipo do Projeto *</label>
-                            <select class="form-select" name="project_type" id="project_type_select" required
-                                onchange="toggleMaintenanceFields()">
+                            <select class="form-select" id="project_type" name="project_type" required
+                                onchange="toggleDates()">
                                 <option value="">Selecione...</option>
                                 <option value="desenvolvimento_sustentacao">Desenvolvimento + Sustentação</option>
                                 <option value="desenvolvimento">Desenvolvimento</option>
@@ -141,13 +141,13 @@ require_once '../../views/layouts/header.php';
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-uppercase text-muted">Início <span
                                             class="date-required-hint text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="start_date" id="start_date">
+                                    <input type="date" class="form-control" id="start_date" name="start_date" required>
                                     <div class="invalid-feedback" id="error_start_date"></div>
                                 </div>
                                 <div class="col-6">
                                     <label class="form-label fw-bold small text-uppercase text-muted">Término <span
                                             class="date-required-hint text-danger">*</span></label>
-                                    <input type="date" class="form-control" name="end_date" id="end_date">
+                                    <input type="date" class="form-control" id="end_date" name="end_date" required>
                                     <div class="invalid-feedback" id="error_end_date"></div>
                                 </div>
                             </div>
@@ -488,8 +488,22 @@ require_once '../../views/layouts/header.php';
     }
 
     // Toggle maintenance fields based on project type
-    function toggleMaintenanceFields() {
-        const projectType = document.getElementById('project_type_select').value;
+    function toggleMaintenanceFields(select) {
+        // Handle direct call or event
+        if (!select) select = document.getElementById('project_type');
+        if (!select) return;
+
+        const maintenanceFieldsContainer = document.getElementById('maintenance-fields');
+        // Logic for showing/hiding container if it exists (assuming it wraps the fields)
+        if (maintenanceFieldsContainer) {
+            if (select.value === 'sustentacao' || select.value === 'desenvolvimento_sustentacao') {
+                maintenanceFieldsContainer.style.display = 'block';
+            } else {
+                maintenanceFieldsContainer.style.display = 'none';
+            }
+        }
+
+        const projectType = select.value;
         const maintenanceFields = [
             document.getElementById('maintenance_start_date'),
             document.getElementById('maintenance_end_date'),
@@ -510,23 +524,36 @@ require_once '../../views/layouts/header.php';
                 }
             }
         });
+
+        toggleDates();
     }
 
-    // Toggle date requirement based on status
-    function toggleDateRequirement() {
-        const status = document.getElementById('status_select').value;
-        const dateHints = document.querySelectorAll('.date-required-hint');
-        const dateHint = document.getElementById('date_hint');
-        const isPlanejamento = (status === 'planejamento' || status === 'nao_aprovado');
+    function toggleDates() {
+        const select = document.getElementById('project_type');
+        if (!select) return;
 
-        dateHints.forEach(h => h.style.display = isPlanejamento ? 'none' : 'inline');
-        if (dateHint) dateHint.style.display = isPlanejamento ? 'block' : 'none';
+        const type = select.value;
+        const startDate = document.getElementById('start_date');
+        const endDate = document.getElementById('end_date');
+
+        if (type === 'sustentacao') {
+            startDate.required = false;
+            endDate.required = false;
+            // Visual feedback (optional)
+            document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'none');
+        } else {
+            startDate.required = true;
+            endDate.required = true;
+            document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'inline');
+        }
     }
 
     // Run on page load
     document.addEventListener('DOMContentLoaded', function () {
-        toggleDateRequirement();
-        toggleMaintenanceFields();
+        const select = document.getElementById('project_type');
+        if (select) {
+            toggleMaintenanceFields(select);
+        }
         setupAutoCalculation();
     });
 
@@ -547,14 +574,15 @@ require_once '../../views/layouts/header.php';
     }
 
     function calculateTotalBudget() {
-        const projectType = document.getElementById('project_type_select').value;
+        const projectTypeSelect = document.getElementById('project_type');
+        if (!projectTypeSelect) return;
         // Only for Sustentação (pure)
-        if (projectType !== 'sustentacao') return;
+        if (projectTypeSelect.value !== 'sustentacao') return;
 
         const startStr = document.getElementById('maintenance_start_date').value;
         const endStr = document.getElementById('maintenance_end_date').value;
         const monthlyValStr = document.getElementById('maintenance_monthly_value').value;
-        const totalBudgetInput = document.getElementsByName('total_budget')[0];
+        const totalBudgetInput = document.querySelector('input[name="total_budget"]');
 
         if (!startStr || !endStr || !monthlyValStr) return;
 
@@ -565,11 +593,6 @@ require_once '../../views/layouts/header.php';
         if (startDate > endDate) return;
 
         let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-        // Incluir mês inicial se dia_fim >= dia_inicio, lógica aproximada ou usar regra de negócio
-        // Usando lógica simples: diferença de meses + 1 se abrange o período
-        // Mas a regra no backend é:
-        // $monthsTotal = $years * 12 + $months;
-        // if (day(d2) >= day(d1)) monthsTotal += 1;
 
         if (endDate.getDate() >= startDate.getDate()) {
             months += 1;
@@ -578,7 +601,6 @@ require_once '../../views/layouts/header.php';
         if (months <= 0) months = 0;
 
         // Parse currency
-        // Remove R$, dots, replace comma with dot
         let cleanVal = monthlyValStr.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
         let monthlyVal = parseFloat(cleanVal);
 
@@ -589,33 +611,36 @@ require_once '../../views/layouts/header.php';
         // Format back to PT-BR for display
         const formattedTotal = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-        // Update Total Budget field
-        // Only if user hasn't manually edited it? Or just overwrite?
-        // Let's overwrite as "Calculos não sendo feitos" implies they want help.
-        totalBudgetInput.value = formattedTotal;
+        if (totalBudgetInput)
+            totalBudgetInput.value = 'R$ ' + formattedTotal;
     }
 
     // Override form submit to validate dates conditionally
-    const originalSubmitHandler = document.querySelector('form').onsubmit;
+    // Removing old submit handler if attached? 
+    // Just attaching a new one that checks logic correctly.
+
     document.querySelector('form').addEventListener('submit', function (e) {
-        const status = document.getElementById('status_select').value;
+        // Check if dates are required based on TYPE, not status
+        // Actually, the user requirements were about TYPE=sustentacao making dates optional.
+        // Status checks might be old logic.
+
+        const type = document.getElementById('project_type').value;
         const startDate = document.getElementById('start_date').value;
         const endDate = document.getElementById('end_date').value;
 
-        // If status is NOT planejamento/nao_aprovado, dates are required
-        if (status !== 'planejamento' && status !== 'nao_aprovado') {
+        if (type !== 'sustentacao') {
             if (!startDate) {
-                showFieldError('#start_date', 'Data de início é obrigatória para este status.');
+                showFieldError('#start_date', 'Data de início é obrigatória.');
                 e.preventDefault();
                 return false;
             }
             if (!endDate) {
-                showFieldError('#end_date', 'Data de término é obrigatória para este status.');
+                showFieldError('#end_date', 'Data de término é obrigatória.');
                 e.preventDefault();
                 return false;
             }
         }
-    }, true); // Use capture to run first
+    }, true); 
 </script>
 
 <?php require_once '../../views/layouts/footer.php'; ?>
