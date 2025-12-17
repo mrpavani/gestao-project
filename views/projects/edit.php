@@ -35,6 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
         'project_name' => $_POST['project_name'],
         'project_type' => $_POST['project_type'],
+        'project_value' => $_POST['project_value'] ?? 0,
         'description' => $_POST['description'],
         'start_date' => $_POST['start_date'],
         'end_date' => $_POST['end_date'],
@@ -119,14 +120,14 @@ require_once '../../views/layouts/header.php';
             </div>
             <div class="card-body p-4">
                 <?php if ($message): ?>
-                    <div id="serverMessage"
-                        class="alert alert-<?php echo $success ? 'success' : 'danger'; ?> alert-dismissible fade show"
-                        role="alert">
-                        <?php echo $message; ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
+                                        <div id="serverMessage"
+                                            class="alert alert-<?php echo $success ? 'success' : 'danger'; ?> alert-dismissible fade show"
+                                            role="alert">
+                                            <?php echo $message; ?>
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                        </div>
                 <?php else: ?>
-                    <div id="serverMessage" style="display:none;"></div>
+                                        <div id="serverMessage" style="display:none;"></div>
                 <?php endif; ?>
 
                 <form method="POST" action="" class="needs-validation">
@@ -136,6 +137,12 @@ require_once '../../views/layouts/header.php';
                             <input type="text" class="form-control" name="project_name"
                                 value="<?php echo htmlspecialchars($project->project_name); ?>" required>
                         </div>
+                        
+                        <div class="col-md-6">
+                             <label class="form-label fw-bold small text-uppercase text-muted">Valor do Projeto (R$)</label>
+                             <input type="text" class="form-control currency-input" name="project_value" id="project_value" 
+                                    value="<?php echo $project->project_value; ?>" placeholder="R$ 0,00">
+                        </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase text-muted">Tipo do Projeto *</label>
@@ -143,9 +150,9 @@ require_once '../../views/layouts/header.php';
                                 onchange="toggleDates()">
                                 <option value="">Selecione...</option>
                                 <?php foreach ($projectTypes as $key => $label): ?>
-                                    <option value="<?php echo $key; ?>" <?php echo $project->project_type === $key ? 'selected' : ''; ?>>
-                                        <?php echo $label; ?>
-                                    </option>
+                                                        <option value="<?php echo $key; ?>" <?php echo $project->project_type === $key ? 'selected' : ''; ?>>
+                                                            <?php echo $label; ?>
+                                                        </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -161,7 +168,7 @@ require_once '../../views/layouts/header.php';
                             <select class="form-select" name="customer_id">
                                 <option value="">-- Selecionar cliente (opcional) --</option>
                                 <?php foreach ($customers as $c): ?>
-                                    <option value="<?php echo $c['id']; ?>" <?php echo ($project->customer_id == $c['id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
+                                                        <option value="<?php echo $c['id']; ?>" <?php echo ($project->customer_id == $c['id']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -234,9 +241,9 @@ require_once '../../views/layouts/header.php';
                             <select class="form-select" name="status" id="status_select" required
                                 onchange="toggleDateRequirement()">
                                 <?php foreach ($statusOptions as $key => $label): ?>
-                                    <option value="<?php echo $key; ?>" <?php echo $project->status === $key ? 'selected' : ''; ?>>
-                                        <?php echo $label; ?>
-                                    </option>
+                                                        <option value="<?php echo $key; ?>" <?php echo $project->status === $key ? 'selected' : ''; ?>>
+                                                            <?php echo $label; ?>
+                                                        </option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -260,58 +267,58 @@ require_once '../../views/layouts/header.php';
                             if (!empty($credentials)):
                                 foreach ($credentials as $cred):
                                     ?>
-                                    <div class="credential-item mb-3 p-3 bg-light rounded border border-light">
-                                        <div class="d-flex justify-content-between mb-2">
-                                            <span class="badge bg-secondary">Acesso #<?php echo $credCount + 1; ?></span>
-                                            <button type="button"
-                                                class="btn btn-xs btn-link text-danger p-0 text-decoration-none"
-                                                onclick="removeCredential(this)">
-                                                <i class="fas fa-times"></i> Remover
-                                            </button>
-                                        </div>
-                                        <div class="row g-2">
-                                            <div class="col-md-3">
-                                                <label class="form-label small">Tipo de Acesso</label>
-                                                <input type="text" class="form-control form-control-sm"
-                                                    name="credentials[<?php echo $credCount; ?>][access_type]"
-                                                    value="<?php echo htmlspecialchars($cred['access_type']); ?>"
-                                                    placeholder="FTP, SSH, Admin...">
-                                            </div>
-                                            <div class="col-md-3">
-                                                <label class="form-label small">URL/Host</label>
-                                                <input type="text" class="form-control form-control-sm"
-                                                    name="credentials[<?php echo $credCount; ?>][server_url]"
-                                                    value="<?php echo htmlspecialchars($cred['server_url']); ?>"
-                                                    placeholder="ex: ftp.site.com">
-                                            </div>
-                                            <div class="col-md-2">
-                                                <label class="form-label small">Usuário</label>
-                                                <input type="text" class="form-control form-control-sm"
-                                                    name="credentials[<?php echo $credCount; ?>][username]"
-                                                    value="<?php echo htmlspecialchars($cred['username']); ?>">
-                                            </div>
-                                            <div class="col-md-4">
-                                                <label class="form-label small">Senha</label>
-                                                <div class="input-group input-group-sm">
-                                                    <input type="password" class="form-control"
-                                                        name="credentials[<?php echo $credCount; ?>][password]"
-                                                        value="<?php echo htmlspecialchars($cred['password']); ?>">
-                                                    <button class="btn btn-outline-secondary" type="button"
-                                                        onclick="togglePassword(this)">
-                                                        <i class="fas fa-eye"></i>
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="col-12 mt-2">
-                                                <label class="form-label small">Observações</label>
-                                                <textarea class="form-control form-control-sm"
-                                                    name="credentials[<?php echo $credCount; ?>][notes]" rows="1"
-                                                    placeholder="Detalhes adicionais..."><?php echo htmlspecialchars($cred['notes']); ?></textarea>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <?php
-                                    $credCount++;
+                                                                            <div class="credential-item mb-3 p-3 bg-light rounded border border-light">
+                                                                                <div class="d-flex justify-content-between mb-2">
+                                                                                    <span class="badge bg-secondary">Acesso #<?php echo $credCount + 1; ?></span>
+                                                                                    <button type="button"
+                                                                                        class="btn btn-xs btn-link text-danger p-0 text-decoration-none"
+                                                                                        onclick="removeCredential(this)">
+                                                                                        <i class="fas fa-times"></i> Remover
+                                                                                    </button>
+                                                                                </div>
+                                                                                <div class="row g-2">
+                                                                                    <div class="col-md-3">
+                                                                                        <label class="form-label small">Tipo de Acesso</label>
+                                                                                        <input type="text" class="form-control form-control-sm"
+                                                                                            name="credentials[<?php echo $credCount; ?>][access_type]"
+                                                                                            value="<?php echo htmlspecialchars($cred['access_type']); ?>"
+                                                                                            placeholder="FTP, SSH, Admin...">
+                                                                                    </div>
+                                                                                    <div class="col-md-3">
+                                                                                        <label class="form-label small">URL/Host</label>
+                                                                                        <input type="text" class="form-control form-control-sm"
+                                                                                            name="credentials[<?php echo $credCount; ?>][server_url]"
+                                                                                            value="<?php echo htmlspecialchars($cred['server_url']); ?>"
+                                                                                            placeholder="ex: ftp.site.com">
+                                                                                    </div>
+                                                                                    <div class="col-md-2">
+                                                                                        <label class="form-label small">Usuário</label>
+                                                                                        <input type="text" class="form-control form-control-sm"
+                                                                                            name="credentials[<?php echo $credCount; ?>][username]"
+                                                                                            value="<?php echo htmlspecialchars($cred['username']); ?>">
+                                                                                    </div>
+                                                                                    <div class="col-md-4">
+                                                                                        <label class="form-label small">Senha</label>
+                                                                                        <div class="input-group input-group-sm">
+                                                                                            <input type="password" class="form-control"
+                                                                                                name="credentials[<?php echo $credCount; ?>][password]"
+                                                                                                value="<?php echo htmlspecialchars($cred['password']); ?>">
+                                                                                            <button class="btn btn-outline-secondary" type="button"
+                                                                                                onclick="togglePassword(this)">
+                                                                                                <i class="fas fa-eye"></i>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="col-12 mt-2">
+                                                                                        <label class="form-label small">Observações</label>
+                                                                                        <textarea class="form-control form-control-sm"
+                                                                                            name="credentials[<?php echo $credCount; ?>][notes]" rows="1"
+                                                                                            placeholder="Detalhes adicionais..."><?php echo htmlspecialchars($cred['notes']); ?></textarea>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                            <?php
+                                                                            $credCount++;
                                 endforeach;
                             endif;
                             ?>
@@ -400,8 +407,11 @@ require_once '../../views/layouts/header.php';
 
         const tb = document.querySelector('input[name="total_budget"]');
         const mm = document.querySelector('input[name="maintenance_monthly_value"]');
+        const pv = document.querySelector('input[name="project_value"]');
+
         if (tb && tb.value) tb.value = unformatCurrency(tb.value);
         if (mm && mm.value) mm.value = unformatCurrency(mm.value);
+        if (pv && pv.value) pv.value = unformatCurrency(pv.value);
 
         // limpar mensagem anterior
         const serverMsg = document.getElementById('serverMessage');
@@ -474,6 +484,27 @@ require_once '../../views/layouts/header.php';
         }
         mmField.value = formatCurrency(val);
     }
+    
+    // Format Project Value
+    const pvField = document.querySelector('input[name="project_value"]');
+    if (pvField) pvField.addEventListener('input', function(e) { 
+        formatCurrencyInput(e); 
+        calculateTotalBudget(); 
+    });
+    
+    if (pvField && pvField.value && !pvField.value.includes('R$')) {
+         let val = pvField.value.replace('.', '');
+         if (pvField.value.indexOf('.') !== -1) {
+             const parts = pvField.value.split('.');
+             if (parts[1].length == 1) parts[1] += '0';
+             val = parts[0] + parts[1];
+         } else {
+             val = pvField.value + '00';
+         }
+         pvField.value = formatCurrency(val);
+         // Also add blur listener for calc
+         pvField.addEventListener('blur', calculateTotalBudget);
+    }
 
 
     // Exibir erros inline
@@ -512,46 +543,100 @@ require_once '../../views/layouts/header.php';
 
     <script>
         function toggleMaintenanceFields(select) {
-            // Se select não for passado (chamada inicial), pegar do DOM
-            if (!select) {
-                select = document.getElementById('project_type');
-            }
+            if (!select) select = document.getElementById('project_type');
             if (!select) return;
 
-            const maintenanceFieldsContainer = document.getElementById('maintenance-fields');
-            // Logic for showing/hiding container if it exists (assuming it wraps the fields)
-            if (maintenanceFieldsContainer) {
-                if (select.value === 'sustentacao' || select.value === 'desenvolvimento_sustentacao') {
-                    maintenanceFieldsContainer.style.display = 'block';
-                } else {
-                    maintenanceFieldsContainer.style.display = 'none';
-                }
-            }
+            const projectType = select.value;
+            const maintenanceFieldsContainer = document.getElementById('maintenance-fields'); // if exists
             
-            // Logic for disabling/enabling specific inputs
-            const type = select.value;
-            const shouldDisable = (type === 'desenvolvimento');
+            // Fields to control
+            const projectValue = document.getElementById('project_value');
+            const startDate = document.getElementById('start_date');
+            const endDate = document.getElementById('end_date');
             
-            const maintenanceInputs = [
+            const maintenanceFields = [
                 document.getElementById('maintenance_start_date'),
                 document.getElementById('maintenance_end_date'),
                 document.getElementById('maintenance_monthly_value')
             ];
 
-            maintenanceInputs.forEach(field => {
-                if (field) {
-                    field.disabled = shouldDisable;
-                    if (shouldDisable) {
-                        field.classList.add('bg-light');
-                        // Optional: clear value
-                        // field.value = ''; 
-                    } else {
+            // 1. Logic for Sustentação Only
+            if (projectType === 'sustentacao') {
+                // Disable Project Value & Dates
+                if (projectValue) {
+                    projectValue.disabled = true;
+                    projectValue.value = 'R$ 0,00';
+                    projectValue.classList.add('bg-light');
+                }
+                if (startDate) {
+                    startDate.disabled = true;
+                    startDate.value = '';
+                    startDate.classList.add('bg-light');
+                }
+                if (endDate) {
+                    endDate.disabled = true;
+                    endDate.value = '';
+                    endDate.classList.add('bg-light');
+                }
+                
+                // Enable Maintenance
+                maintenanceFields.forEach(field => {
+                    if (field) {
+                        field.disabled = false;
                         field.classList.remove('bg-light');
                     }
+                });
+                
+            } else if (projectType === 'desenvolvimento') {
+                // Development Only
+                // Enable Project Value & Dates
+                if (projectValue) {
+                    projectValue.disabled = false;
+                    projectValue.classList.remove('bg-light');
                 }
-            });
+                if (startDate) {
+                    startDate.disabled = false;
+                    startDate.classList.remove('bg-light');
+                }
+                if (endDate) {
+                    endDate.disabled = false;
+                    endDate.classList.remove('bg-light');
+                }
+
+                // Disable Maintenance
+                maintenanceFields.forEach(field => {
+                    if (field) {
+                        field.disabled = true;
+                        field.value = (field.classList.contains('currency-input')) ? '' : '';
+                        field.classList.add('bg-light');
+                    }
+                });
+                
+            } else {
+                // Mixed (Development + Sustentação) or Empty
+                 if (projectValue) {
+                    projectValue.disabled = false;
+                    projectValue.classList.remove('bg-light');
+                }
+                if (startDate) {
+                    startDate.disabled = false;
+                    startDate.classList.remove('bg-light');
+                }
+                if (endDate) {
+                    endDate.disabled = false;
+                    endDate.classList.remove('bg-light');
+                }
+                
+                maintenanceFields.forEach(field => {
+                    if (field) {
+                        field.disabled = false;
+                        field.classList.remove('bg-light');
+                    }
+                });
+            }
 
             toggleDates();
+            calculateTotalBudget();
         }
 
         function toggleDates() {
@@ -563,13 +648,12 @@ require_once '../../views/layouts/header.php';
             const endDate = document.getElementById('end_date');
             
             if (type === 'sustentacao') {
-                startDate.required = false;
-                endDate.required = false;
-                // Visual feedback (optional)
+                if(startDate) startDate.required = false;
+                if(endDate) endDate.required = false;
                 document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'none');
             } else {
-                startDate.required = true;
-                endDate.required = true;
+                if(startDate) startDate.required = true;
+                if(endDate) endDate.required = true;
                 document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'inline');
             }
         }
@@ -590,52 +674,43 @@ require_once '../../views/layouts/header.php';
         }
 
         function calculateTotalBudget() {
-            const projectTypeSelect = document.getElementById('project_type');
-            if (!projectTypeSelect) return;
-            const projectType = projectTypeSelect.value;
-
-            // Only for Sustentação (pure)
-            if (projectType !== 'sustentacao') return;
-
-            const startStr = document.getElementById('maintenance_start_date').value;
-            const endStr = document.getElementById('maintenance_end_date').value;
-            const monthlyValStr = document.getElementById('maintenance_monthly_value').value;
+            const projectValueInput = document.getElementById('project_value');
+            const mMonthlyInput = document.getElementById('maintenance_monthly_value');
             const totalBudgetInput = document.querySelector('input[name="total_budget"]');
 
-            if (!startStr || !endStr || !monthlyValStr || !totalBudgetInput) return;
+            let projectVal = 0;
+            let maintenanceVal = 0;
 
-            // Calculate months
-            const startDate = new Date(startStr);
-            const endDate = new Date(endStr);
-
-            if (startDate > endDate) return;
-
-            let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-
-            if (endDate.getDate() >= startDate.getDate()) {
-                months += 1;
+            // Get Project Value
+            if (projectValueInput && !projectValueInput.disabled) {
+                 let clean = projectValueInput.value.replace(/[^\d]/g, ''); // just digits
+                 if (clean) {
+                    projectVal = parseInt(clean, 10) / 100;
+                 }
             }
 
-            if (months <= 0) months = 0;
+                         }
+                    }
+                }
+            }
 
-            // Parse currency 
-            // formatCurrency helper makes it R$ ... we need to parse that or raw value
-            // Input mask lib usually keeps raw value? No, previous code parsed manually.
-            
-            let cleanVal = monthlyValStr.replace('R$', '').replace(/\./g, '').replace(',', '.').trim();
-            // If the user typed 1.000,00 -> "1000.00"
-            // If the user typed 1000 -> "1000"
-            
-            let monthlyVal = parseFloat(cleanVal);
-            if (isNaN(monthlyVal)) monthlyVal = 0;
+            const total = projectVal + maintenanceTotal;
 
-            const total = monthlyVal * months;
-
-            // Format back to PT-BR for display using our formatCurrency function if available, 
-            // or manual formatter matching the expected input format (R$ ...)
-            
-            // Reusing existing formatCurrency function from earlier in file
-            totalBudgetInput.value = formatCurrency(total.toFixed(2).replace('.', ''));
+            if (totalBudgetInput) {
+                // formatCurrency expects a number-like string that it can pad with 0s if needed, 
+                // OR we can just use toLocalString if formatCurrency is just visual.
+                // The existing formatCurrency takes a value (e.g "500000" or "5000.00") and converts to R$ ...
+                // Let's use toLocaleString which is safer for the display value
+                // BUT we must match the format expected by formatCurrency if we were to use it.
+                // Reusing formatCurrency logic:
+                // It expects a string of digits representing cents.
+                
+                // total is float (e.g. 5000.00)
+                // We need 500000
+                
+                const totalCents = Math.round(total * 100).toString();
+                totalBudgetInput.value = formatCurrency(totalCents);
+            }
         }
 
         // Run on load

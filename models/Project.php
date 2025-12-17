@@ -8,6 +8,7 @@ class Project
     public $customer_id;
     public $project_name;
     public $project_type;
+    public $project_value;
     public $description;
     public $observation;
     public $start_date;
@@ -33,6 +34,7 @@ class Project
                 SET customer_id = :customer_id,
                     project_name = :project_name,
                     project_type = :project_type,
+                    project_value = :project_value,
                     description = :description,
                     start_date = :start_date,
                     end_date = :end_date,
@@ -56,6 +58,7 @@ class Project
         $stmt->bindParam(":customer_id", $customer_id);
         $stmt->bindParam(":project_name", $this->project_name);
         $stmt->bindParam(":project_type", $this->project_type);
+        $stmt->bindParam(":project_value", $this->project_value);
         $stmt->bindParam(":description", $this->description);
         $stmt->bindParam(":start_date", $start_date);
         $stmt->bindParam(":end_date", $end_date);
@@ -72,7 +75,7 @@ class Project
     public function read()
     {
         // Seleciona campos explicitamente e garante que valores numéricos não retornem NULL
-        $query = "SELECT id, project_name, project_type, description, start_date, end_date,
+        $query = "SELECT id, project_name, project_type, project_value, description, start_date, end_date,
                          COALESCE(total_budget, 0) AS total_budget,
                          COALESCE(current_spent, 0) AS current_spent,
                          COALESCE(maintenance_monthly_value, 0) AS maintenance_monthly_value,
@@ -97,6 +100,7 @@ class Project
         $this->customer_id = $row['customer_id'] ?? null;
         $this->project_name = $row['project_name'];
         $this->project_type = $row['project_type'];
+        $this->project_value = (float) (isset($row['project_value']) ? $row['project_value'] : 0);
         $this->description = $row['description'];
         $this->start_date = $row['start_date'];
         $this->end_date = $row['end_date'];
@@ -118,6 +122,7 @@ class Project
                 SET customer_id = :customer_id,
                     project_name = :project_name,
                     project_type = :project_type,
+                    project_value = :project_value,
                     description = :description,
                     start_date = :start_date,
                     end_date = :end_date,
@@ -142,6 +147,7 @@ class Project
         $stmt->bindParam(":customer_id", $customer_id);
         $stmt->bindParam(":project_name", $this->project_name);
         $stmt->bindParam(":project_type", $this->project_type);
+        $stmt->bindParam(":project_value", $this->project_value);
         $stmt->bindParam(":description", $this->description);
         $stmt->bindParam(":start_date", $start_date);
         $stmt->bindParam(":end_date", $end_date);

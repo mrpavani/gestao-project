@@ -28,6 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $data = [
         'project_name' => $_POST['project_name'],
         'project_type' => $_POST['project_type'],
+        'project_value' => $_POST['project_value'] ?? 0,
         'description' => $_POST['description'],
         'start_date' => $_POST['start_date'],
         'end_date' => $_POST['end_date'],
@@ -125,6 +126,15 @@ require_once '../../views/layouts/header.php';
                                 placeholder="Detalhes sobre o escopo do projeto..."></textarea>
                         </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-uppercase text-muted">Valor do Projeto
+                                (R$)</label>
+                            <input type="text" class="form-control currency-input" name="project_value"
+                                id="project_value" placeholder="R$ 0,00">
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mt-2">
                         <div class="col-md-6">
                             <label class="form-label fw-bold small text-uppercase text-muted">Cliente</label>
                             <select class="form-select" name="customer_id">
@@ -381,8 +391,11 @@ require_once '../../views/layouts/header.php';
 
         const tb = document.querySelector('input[name="total_budget"]');
         const mm = document.querySelector('input[name="maintenance_monthly_value"]');
+        const pv = document.querySelector('input[name="project_value"]');
+
         if (tb && tb.value) tb.value = unformatCurrency(tb.value);
         if (mm && mm.value) mm.value = unformatCurrency(mm.value);
+        if (pv && pv.value) pv.value = unformatCurrency(pv.value);
 
         // limpar mensagem anterior
         const serverMsg = document.getElementById('serverMessage');
@@ -403,6 +416,15 @@ require_once '../../views/layouts/header.php';
 
     const totalBudgetInput = document.querySelector('input[name="total_budget"]');
     const maintenanceMonthlyInput = document.querySelector('input[name="maintenance_monthly_value"]');
+    const projectValueInput = document.querySelector('input[name="project_value"]');
+
+    if (projectValueInput) {
+        projectValueInput.addEventListener('input', function () { formatCurrency(this); calculateTotalBudget(); });
+        projectValueInput.addEventListener('blur', function () {
+            if (this.value && !this.value.includes('R$')) formatCurrency(this);
+            calculateTotalBudget();
+        });
+    }
 
     if (totalBudgetInput) {
         totalBudgetInput.addEventListener('input', function () {
@@ -487,45 +509,102 @@ require_once '../../views/layouts/header.php';
         }
     }
 
-    // Toggle maintenance fields based on project type
+    // Toggle maintenance fields and project fields based on project type
     function toggleMaintenanceFields(select) {
-        // Handle direct call or event
         if (!select) select = document.getElementById('project_type');
         if (!select) return;
 
-        const maintenanceFieldsContainer = document.getElementById('maintenance-fields');
-        // Logic for showing/hiding container if it exists (assuming it wraps the fields)
-        if (maintenanceFieldsContainer) {
-            if (select.value === 'sustentacao' || select.value === 'desenvolvimento_sustentacao') {
-                maintenanceFieldsContainer.style.display = 'block';
-            } else {
-                maintenanceFieldsContainer.style.display = 'none';
-            }
-        }
-
         const projectType = select.value;
+        const maintenanceFieldsContainer = document.getElementById('maintenance-fields'); // if exists
+
+        // Fields to control
+        const projectValue = document.getElementById('project_value');
+        const startDate = document.getElementById('start_date');
+        const endDate = document.getElementById('end_date');
+
         const maintenanceFields = [
             document.getElementById('maintenance_start_date'),
             document.getElementById('maintenance_end_date'),
             document.getElementById('maintenance_monthly_value')
         ];
 
-        // Disable for "desenvolvimento" type, enable for others
-        const shouldDisable = (projectType === 'desenvolvimento');
+        // 1. Logic for Sustentação Only
+        if (projectType === 'sustentacao') {
+            // Disable Project Value & Dates
+            if (projectValue) {
+                projectValue.disabled = true;
+                projectValue.value = 'R$ 0,00';
+                projectValue.classList.add('bg-light');
+            }
+            if (startDate) {
+                startDate.disabled = true;
+                startDate.value = '';
+                startDate.classList.add('bg-light');
+            }
+            if (endDate) {
+                endDate.disabled = true;
+                endDate.value = '';
+                endDate.classList.add('bg-light');
+            }
 
-        maintenanceFields.forEach(field => {
-            if (field) {
-                field.disabled = shouldDisable;
-                if (shouldDisable) {
-                    field.value = '';
-                    field.classList.add('bg-light');
-                } else {
+            // Enable Maintenance
+            maintenanceFields.forEach(field => {
+                if (field) {
+                    field.disabled = false;
                     field.classList.remove('bg-light');
                 }
-            }
-        });
+            });
 
-        toggleDates();
+        } else if (projectType === 'desenvolvimento') {
+            // Development Only
+            // Enable Project Value & Dates
+            if (projectValue) {
+                projectValue.disabled = false;
+                projectValue.classList.remove('bg-light');
+            }
+            if (startDate) {
+                startDate.disabled = false;
+                startDate.classList.remove('bg-light');
+            }
+            if (endDate) {
+                endDate.disabled = false;
+                endDate.classList.remove('bg-light');
+            }
+
+            // Disable Maintenance
+            maintenanceFields.forEach(field => {
+                if (field) {
+                    field.disabled = true;
+                    field.value = (field.classList.contains('currency-input')) ? '' : '';
+                    field.classList.add('bg-light');
+                }
+            });
+
+        } else {
+            // Mixed (Development + Sustentação) or Empty
+            if (projectValue) {
+                projectValue.disabled = false;
+                projectValue.classList.remove('bg-light');
+            }
+            if (startDate) {
+                startDate.disabled = false;
+                startDate.classList.remove('bg-light');
+            }
+            if (endDate) {
+                endDate.disabled = false;
+                endDate.classList.remove('bg-light');
+            }
+
+            maintenanceFields.forEach(field => {
+                if (field) {
+                    field.disabled = false;
+                    field.classList.remove('bg-light');
+                }
+            });
+        }
+
+        toggleDates(); // Update required states
+        calculateTotalBudget(); // Recalc
     }
 
     function toggleDates() {
@@ -536,84 +615,57 @@ require_once '../../views/layouts/header.php';
         const startDate = document.getElementById('start_date');
         const endDate = document.getElementById('end_date');
 
+        // Start/End required only if NOT sustentacao (and not empty)
         if (type === 'sustentacao') {
-            startDate.required = false;
-            endDate.required = false;
-            // Visual feedback (optional)
+            if (startDate) startDate.required = false;
+            if (endDate) endDate.required = false;
             document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'none');
         } else {
-            startDate.required = true;
-            endDate.required = true;
+            if (startDate) startDate.required = true;
+            if (endDate) endDate.required = true;
             document.querySelectorAll('.date-required-hint').forEach(el => el.style.display = 'inline');
         }
     }
 
-    // Run on page load
-    document.addEventListener('DOMContentLoaded', function () {
-        const select = document.getElementById('project_type');
-        if (select) {
-            toggleMaintenanceFields(select);
-        }
-        setupAutoCalculation();
-    });
-
-    function setupAutoCalculation() {
-        // Listeners for auto-calc
-        const inputs = [
-            document.getElementById('maintenance_start_date'),
-            document.getElementById('maintenance_end_date'),
-            document.getElementById('maintenance_monthly_value')
-        ];
-
-        inputs.forEach(input => {
-            if (input) {
-                input.addEventListener('change', calculateTotalBudget);
-                input.addEventListener('blur', calculateTotalBudget);
-            }
-        });
-    }
-
     function calculateTotalBudget() {
-        const projectTypeSelect = document.getElementById('project_type');
-        if (!projectTypeSelect) return;
-        // Only for Sustentação (pure)
-        if (projectTypeSelect.value !== 'sustentacao') return;
-
-        const startStr = document.getElementById('maintenance_start_date').value;
-        const endStr = document.getElementById('maintenance_end_date').value;
-        const monthlyValStr = document.getElementById('maintenance_monthly_value').value;
+        const projectValueInput = document.getElementById('project_value');
+        const mMonthlyInput = document.getElementById('maintenance_monthly_value');
         const totalBudgetInput = document.querySelector('input[name="total_budget"]');
 
-        if (!startStr || !endStr || !monthlyValStr) return;
+        let projectVal = 0;
+        let maintenanceVal = 0;
 
-        // Calculate months
-        const startDate = new Date(startStr);
-        const endDate = new Date(endStr);
-
-        if (startDate > endDate) return;
-
-        let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
-
-        if (endDate.getDate() >= startDate.getDate()) {
-            months += 1;
+        // Get Project Value
+        if (projectValueInput && !projectValueInput.disabled) {
+            let clean = projectValueInput.value.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+            let val = parseFloat(clean);
+            if (!isNaN(val)) projectVal = val;
         }
 
-        if (months <= 0) months = 0;
+        if (endDate >= startDate) {
+            let months = (endDate.getFullYear() - startDate.getFullYear()) * 12 + (endDate.getMonth() - startDate.getMonth());
+            if (endDate.getDate() >= startDate.getDate()) months += 1; // Include fractional month as full if day passed? Stick to previous logic
+            // Previous logic was inclusive if end day >= start day. 
 
-        // Parse currency
-        let cleanVal = monthlyValStr.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
-        let monthlyVal = parseFloat(cleanVal);
-
-        if (isNaN(monthlyVal)) monthlyVal = 0;
-
-        const total = monthlyVal * months;
-
-        // Format back to PT-BR for display
-        const formattedTotal = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-        if (totalBudgetInput)
-            totalBudgetInput.value = 'R$ ' + formattedTotal;
+            if (months > 0) {
+                let cleanM = monthlyStr.replace(/[^\d,.-]/g, '').replace('.', '').replace(',', '.');
+                let valM = parseFloat(cleanM);
+                if (!isNaN(valM)) {
+                    maintenanceTotal = valM * months;
+                }
+            }
+        }
     }
+        }
+
+    const total = projectVal + maintenanceTotal;
+
+    if (totalBudgetInput) {
+        const formattedTotal = total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        totalBudgetInput.value = 'R$ ' + formattedTotal;
+    }
+    }
+
 
     // Override form submit to validate dates conditionally
     // Removing old submit handler if attached? 
